@@ -9,10 +9,10 @@ const projects = [
     eyebrow: "Reisapp · binnenkort",
     description:
       "Planning, plekken, foto’s, Italiaanse zinnen en een klein beetje competitie voor vijf reizigers.",
-    color: "bg-[#215343] text-[#f7f5ee]",
-    labelColor: "text-[#c8f169]",
-    dotColor: "bg-[#ffc7a6]",
-    decoration: "border-[#c8f169]",
+    color: "bg-[#b31c38] text-white",
+    labelColor: "text-[#ffd2dd]",
+    dotColor: "bg-[#ce0f3d]",
+    decoration: "border-[#fa9ab0]",
   },
   {
     number: "02",
@@ -20,10 +20,10 @@ const projects = [
     eyebrow: "Visualisaties · in opbouw",
     description:
       "Dashboards, Python-experimenten en manieren om cijfers net iets minder saai te maken.",
-    color: "bg-[#ffc7a6] text-[#17231e]",
-    labelColor: "text-[#d64e25]",
-    dotColor: "bg-[#17231e]",
-    decoration: "border-[#d64e25]",
+    color: "bg-[#2994c9] text-white",
+    labelColor: "text-[#e7f6fc]",
+    dotColor: "bg-[#54a7d9]",
+    decoration: "border-[#bbdff3]",
   },
   {
     number: "03",
@@ -31,10 +31,10 @@ const projects = [
     eyebrow: "Spelen · in opbouw",
     description:
       "Van oude Python-projecten tot kleine webgames waar je even in kunt verdwijnen.",
-    color: "bg-[#a8d8ff] text-[#17231e]",
-    labelColor: "text-[#126a8f]",
-    dotColor: "bg-[#126a8f]",
-    decoration: "border-[#126a8f]",
+    color: "bg-[#fbb01f] text-[#023a4f]",
+    labelColor: "text-[#023a4f]",
+    dotColor: "bg-[#fdc32d]",
+    decoration: "border-[#fff0db]",
   },
   {
     number: "04",
@@ -42,10 +42,10 @@ const projects = [
     eyebrow: "Experimenten · altijd open",
     description:
       "Een verzamelplek voor ideeën die nog geen categorie, plan of einddatum nodig hebben.",
-    color: "bg-[#c8f169] text-[#17231e]",
-    labelColor: "text-[#477622]",
-    dotColor: "bg-[#e95f32]",
-    decoration: "border-[#e95f32]",
+    color: "bg-[#0d5748] text-white",
+    labelColor: "text-[#d7f2dd]",
+    dotColor: "bg-[#006853]",
+    decoration: "border-[#bbdfb2]",
   },
 ];
 
@@ -150,7 +150,7 @@ export function ProjectsCarousel() {
             <span
               aria-label={`Project ${index + 1}`}
               className={`h-1.5 rounded-full transition-all duration-300 ${
-                index === activeProject ? "w-7 bg-[#17231e]" : "w-1.5 bg-[#17231e]/20"
+                index === activeProject ? "w-7 bg-[#023a4f]" : "w-1.5 bg-[#023a4f]/20"
               }`}
               key={project.number}
             />
@@ -159,7 +159,7 @@ export function ProjectsCarousel() {
         <div className="flex gap-2">
           <button
             aria-label="Vorig project"
-            className="grid h-10 w-10 place-items-center rounded-full border border-[#17231e]/15 transition-colors hover:bg-[#17231e] hover:text-[#f7f5ee]"
+            className="grid h-10 w-10 place-items-center rounded-full border border-[#023a4f]/15 transition-colors hover:bg-[#023a4f] hover:text-white"
             onClick={() => scrollProjects("previous")}
             type="button"
           >
@@ -167,7 +167,7 @@ export function ProjectsCarousel() {
           </button>
           <button
             aria-label="Volgend project"
-            className="grid h-10 w-10 place-items-center rounded-full border border-[#17231e]/15 transition-colors hover:bg-[#17231e] hover:text-[#f7f5ee]"
+            className="grid h-10 w-10 place-items-center rounded-full border border-[#023a4f]/15 transition-colors hover:bg-[#023a4f] hover:text-white"
             onClick={() => scrollProjects("next")}
             type="button"
           >

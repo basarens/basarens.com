@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f7f5ee;
-  --foreground: #17231e;
+  --background: #f4f4f4;
+  --foreground: #023a4f;
 }
 
 @theme inline {
@@ -28,8 +28,8 @@ body {
 }
 
 ::selection {
-  background: #c8f169;
-  color: #17231e;
+  background: #ff6c37;
+  color: #ffffff;
 }
 
 .project-strip {
