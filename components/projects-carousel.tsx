@@ -9,10 +9,10 @@ const projects = [
     eyebrow: "Reisapp · binnenkort",
     description:
       "Planning, plekken, foto’s, Italiaanse zinnen en een klein beetje competitie voor vijf reizigers.",
-    color: "bg-[#b31c38] text-white",
+    mutedColor: "bg-[#b31c38] text-white",
+    mainColor: "bg-[#ce0f3d]",
     labelColor: "text-[#ffd2dd]",
-    dotColor: "bg-[#ce0f3d]",
-    decoration: "border-[#fa9ab0]",
+    accentColor: "#fa9ab0",
   },
   {
     number: "02",
@@ -20,10 +20,10 @@ const projects = [
     eyebrow: "Visualisaties · in opbouw",
     description:
       "Dashboards, Python-experimenten en manieren om cijfers net iets minder saai te maken.",
-    color: "bg-[#2994c9] text-white",
+    mutedColor: "bg-[#2994c9] text-white",
+    mainColor: "bg-[#54a7d9]",
     labelColor: "text-[#e7f6fc]",
-    dotColor: "bg-[#54a7d9]",
-    decoration: "border-[#bbdff3]",
+    accentColor: "#bbdff3",
   },
   {
     number: "03",
@@ -31,10 +31,10 @@ const projects = [
     eyebrow: "Spelen · in opbouw",
     description:
       "Van oude Python-projecten tot kleine webgames waar je even in kunt verdwijnen.",
-    color: "bg-[#fbb01f] text-[#023a4f]",
+    mutedColor: "bg-[#fbb01f] text-[#023a4f]",
+    mainColor: "bg-[#fdc32d]",
     labelColor: "text-[#023a4f]",
-    dotColor: "bg-[#fdc32d]",
-    decoration: "border-[#fff0db]",
+    accentColor: "#fedeaf",
   },
   {
     number: "04",
@@ -42,10 +42,10 @@ const projects = [
     eyebrow: "Experimenten · altijd open",
     description:
       "Een verzamelplek voor ideeën die nog geen categorie, plan of einddatum nodig hebben.",
-    color: "bg-[#0d5748] text-white",
+    mutedColor: "bg-[#0d5748] text-white",
+    mainColor: "bg-[#006853]",
     labelColor: "text-[#d7f2dd]",
-    dotColor: "bg-[#006853]",
-    decoration: "border-[#bbdfb2]",
+    accentColor: "#bbdfb2",
   },
 ];
 
@@ -114,14 +114,19 @@ export function ProjectsCarousel() {
       >
         {projects.map((project) => (
           <article
-            className={`group relative aspect-square w-[84vw] shrink-0 snap-center overflow-hidden rounded-[2.5rem] p-6 shadow-sm transition duration-500 ease-out hover:-translate-y-2 hover:rotate-[-1deg] sm:w-[520px] sm:p-8 ${project.color}`}
+            className={`group relative aspect-square w-[84vw] shrink-0 snap-center overflow-hidden rounded-[2.5rem] p-6 shadow-sm transition duration-500 ease-out hover:-translate-y-2 hover:rotate-[-1deg] sm:w-[520px] sm:p-8 ${project.mutedColor}`}
             key={project.number}
           >
             <div
-              className={`absolute -right-12 -top-12 h-44 w-44 rounded-full border-[18px] transition-transform duration-700 ease-out group-hover:scale-125 group-hover:-translate-x-4 group-hover:translate-y-4 ${project.decoration}`}
+              className={`absolute -left-[28%] -top-[62%] h-[125%] w-[156%] rounded-full transition-transform duration-700 ease-out group-hover:scale-105 group-hover:-translate-y-3 ${project.mainColor}`}
             />
             <div
-              className={`absolute bottom-8 right-8 h-4 w-4 rounded-full transition-transform duration-500 group-hover:scale-150 ${project.dotColor}`}
+              className="absolute -right-12 -top-12 h-44 w-44 rounded-full border-[18px] transition-transform duration-700 ease-out group-hover:scale-125 group-hover:-translate-x-4 group-hover:translate-y-4"
+              style={{ borderColor: project.accentColor }}
+            />
+            <div
+              className="absolute bottom-8 right-8 h-4 w-4 rounded-full transition-transform duration-500 group-hover:scale-150"
+              style={{ backgroundColor: project.accentColor }}
             />
             <div className="relative flex h-full flex-col">
               <div className="flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.14em] opacity-60">
