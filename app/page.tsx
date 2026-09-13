@@ -1,69 +1,142 @@
-import Image from "next/image";
+const projects = [
+  {
+    number: "01",
+    title: "Rome ’26",
+    label: "Reisapp · binnenkort",
+    description:
+      "Een interactieve reisgenoot voor vijf mensen in Rome: planning, plekken, foto’s en kleine uitdagingen.",
+    accent: "bg-[#c8f169]",
+  },
+  {
+    number: "02",
+    title: "Data & dingen",
+    label: "Visualisaties · in opbouw",
+    description:
+      "Een thuis voor dashboards, Python-experimenten en manieren om data iets meer tot leven te brengen.",
+    accent: "bg-[#ffc7a6]",
+  },
+  {
+    number: "03",
+    title: "Playground",
+    label: "Experimenten · altijd open",
+    description:
+      "Kleine ideeën, webgames en projecten die geen andere reden nodig hebben dan dat ze leuk zijn om te maken.",
+    accent: "bg-[#a8d8ff]",
+  },
+];
 
 export default function Home() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <main className="min-h-screen overflow-hidden bg-[#f7f5ee] text-[#17231e]">
+      <div className="mx-auto flex min-h-screen w-full max-w-7xl flex-col px-6 py-6 sm:px-10 lg:px-16">
+        <header className="flex items-center justify-between border-b border-[#17231e]/15 pb-5">
+          <a className="text-lg font-semibold tracking-[-0.05em]" href="#top">
+            bas arens<span className="text-[#e95f32]">.</span>
+          </a>
+          <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#17231e]/55 sm:text-xs">
+            personal website · in progress
           </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+        </header>
+
+        <section
+          id="top"
+          className="grid flex-1 items-center gap-12 py-16 sm:py-24 lg:grid-cols-[1.15fr_0.85fr] lg:gap-16"
+        >
+          <div>
+            <p className="mb-6 font-mono text-xs uppercase tracking-[0.18em] text-[#e95f32]">
+              Welkom in mijn hoekje van het internet
+            </p>
+            <h1 className="max-w-3xl text-5xl font-semibold leading-[0.94] tracking-[-0.075em] sm:text-7xl lg:text-8xl">
+              Ik maak dingen om te ontdekken.
+            </h1>
+            <p className="mt-8 max-w-xl text-lg leading-relaxed text-[#17231e]/72 sm:text-xl">
+              Dit is mijn persoonlijke playground voor interactieve ideeën,
+              data-experimenten, games en projecten die onderweg mogen
+              veranderen.
+            </p>
+            <a
+              className="mt-10 inline-flex items-center gap-3 rounded-full bg-[#17231e] px-5 py-3 text-sm font-medium text-[#f7f5ee] transition-transform hover:-translate-y-1"
+              href="#projects"
+            >
+              Kijk wat er komt
+              <span aria-hidden="true">↓</span>
+            </a>
+          </div>
+
+          <div className="relative mx-auto aspect-square w-full max-w-md rotate-2 rounded-[2.75rem] bg-[#17231e] p-5 shadow-[12px_14px_0_#e95f32] sm:p-7">
+            <div className="relative flex h-full flex-col overflow-hidden rounded-[2rem] border border-white/15 bg-[#215343] p-6 text-[#f7f5ee] sm:p-8">
+              <div className="flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.12em] text-white/60">
+                <span>currently brewing</span>
+                <span>2026</span>
+              </div>
+              <div className="relative z-10 mt-auto">
+                <p className="font-mono text-xs uppercase tracking-[0.16em] text-[#c8f169]">
+                  First bigger project
+                </p>
+                <p className="mt-2 text-4xl font-semibold tracking-[-0.07em] sm:text-5xl">
+                  Roma<br />
+                  2026 🇮🇹
+                </p>
+                <p className="mt-4 max-w-xs text-sm leading-relaxed text-white/70">
+                  Een reisapp voor planning, verkennen, foto’s en een beetje
+                  competitie.
+                </p>
+              </div>
+              <div className="absolute -right-11 -top-11 h-48 w-48 rounded-full border-[20px] border-[#c8f169]" />
+              <div className="absolute right-9 top-24 h-5 w-5 rounded-full bg-[#ffc7a6]" />
+              <div className="absolute bottom-8 right-10 font-mono text-5xl text-white/15">
+                06—09
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="projects" className="border-t border-[#17231e]/15 py-12 sm:py-16">
+          <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <p className="font-mono text-xs uppercase tracking-[0.18em] text-[#e95f32]">
+                In opbouw
+              </p>
+              <h2 className="mt-2 text-3xl font-semibold tracking-[-0.055em] sm:text-4xl">
+                Ruimte voor ideeën.
+              </h2>
+            </div>
+            <p className="max-w-xs text-sm leading-relaxed text-[#17231e]/60">
+              Deze site hoeft nooit af te zijn. Dat is juist het plan.
+            </p>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-3">
+            {projects.map((project) => (
+              <article
+                className="rounded-3xl border border-[#17231e]/12 bg-white/45 p-6 transition-transform hover:-translate-y-1"
+                key={project.number}
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <span className="font-mono text-xs text-[#17231e]/45">
+                    {project.number}
+                  </span>
+                  <span className={`h-3 w-3 rounded-full ${project.accent}`} />
+                </div>
+                <h3 className="mt-12 text-2xl font-semibold tracking-[-0.05em]">
+                  {project.title}
+                </h3>
+                <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.12em] text-[#e95f32]">
+                  {project.label}
+                </p>
+                <p className="mt-5 text-sm leading-relaxed text-[#17231e]/65">
+                  {project.description}
+                </p>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-[#17231e]/15 py-5 font-mono text-[10px] uppercase tracking-[0.12em] text-[#17231e]/50">
+          <p>basarens.com</p>
+          <p>Werk in uitvoering</p>
+        </footer>
+      </div>
+    </main>
   );
 }
