@@ -1,34 +1,21 @@
 import Link from "next/link";
+import { RomeAgenda } from "@/components/rome-agenda";
+import { RomeCountdown } from "@/components/rome-countdown";
 
-const buildingBlocks = [
-  {
-    number: "01",
-    title: "Agenda",
-    description: "De gezamenlijke planning voor vier dagen Rome.",
-    color: "bg-[#ce0f3d] text-white",
-    accent: "#fa9ab0",
-  },
-  {
-    number: "02",
-    title: "Explore",
-    description: "Een kaart met jullie verblijf, plekken en routes.",
-    color: "bg-[#54a7d9] text-white",
-    accent: "#bbdff3",
-  },
-  {
-    number: "03",
-    title: "Italian survival",
-    description: "Een paar zinnen voor pizza, birra en il conto.",
-    color: "bg-[#fbb01f] text-[#023a4f]",
-    accent: "#fedeaf",
-  },
-  {
-    number: "04",
-    title: "Roma game",
-    description: "Trivia, challenges en een leaderboard voor vijf.",
-    color: "bg-[#0d5748] text-white",
-    accent: "#bbdfb2",
-  },
+const packingAllowed = [
+  "1 accessoire onder de stoel: maximaal 40 × 30 × 15 cm.",
+  "Vloeistoffen, gels, crèmes en sprays: verpakking van maximaal 100 ml, samen in één doorzichtig 1-literzakje.",
+  "Telefoon, laptop en camera. Een powerbank mag mee als de capaciteit erop staat; bewaar hem bij je.",
+  "Medicijnen die je tijdens de vlucht nodig hebt, bij voorkeur met recept of doktersverklaring.",
+  "Een lege drinkfles; na security kun je hem weer vullen.",
+];
+
+const packingNotAllowed = [
+  "Een cabine-trolley van 55 × 35 × 25 cm: die is niet inbegrepen volgens deze boeking.",
+  "Vloeistoffen in verpakkingen groter dan 100 ml, ook als ze niet vol zijn.",
+  "Scherpe voorwerpen, grote gereedschappen, wapens en zelfverdedigingssprays.",
+  "Brandbare of explosieve spullen, zoals vuurwerk, brandstof en gasflessen.",
+  "Powerbanks in ruimbagage; reservebatterijen horen bij je in de cabine.",
 ];
 
 export default function Rome2026Page() {
@@ -48,7 +35,7 @@ export default function Rome2026Page() {
           </p>
         </header>
 
-        <section className="grid flex-1 items-center gap-10 py-12 sm:py-16 lg:grid-cols-[1.1fr_0.9fr] lg:gap-16">
+        <section className="grid items-center gap-10 py-12 sm:py-16 lg:grid-cols-[1.1fr_0.9fr] lg:gap-16">
           <div>
             <p className="font-mono text-xs uppercase tracking-[0.18em] text-[#ce0f3d]">
               6 — 9 november 2026 · vijf reizigers
@@ -58,31 +45,23 @@ export default function Rome2026Page() {
               ’26
             </h1>
             <p className="mt-7 max-w-md text-lg leading-relaxed text-[#b31c38]/75">
-              Een kleine reisapp die vóór vertrek helpt plannen en tijdens de
-              reis steeds meer jullie gezamenlijke verhaal wordt.
+              De reis begint met een tas die klopt, een route naar Schiphol en
+              een gezamenlijke planning die rustig mag groeien.
             </p>
           </div>
 
-          <div className="relative aspect-square overflow-hidden rounded-[2.75rem] bg-[#b31c38] p-7 text-white shadow-[12px_14px_0_#ce0f3d] sm:p-9">
+          <div className="relative overflow-hidden rounded-[2.75rem] bg-[#b31c38] p-7 text-white shadow-[12px_14px_0_#ce0f3d] sm:p-9">
             <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full border-[28px] border-[#fa9ab0]" />
-            <div className="absolute -bottom-[42%] -left-[45%] h-[120%] w-[120%] rounded-full bg-[#ce0f3d]" />
-            <div className="relative flex h-full flex-col">
+            <div className="absolute -bottom-[72%] -left-[75%] h-[160%] w-[160%] rounded-full bg-[#ce0f3d]" />
+            <div className="relative">
               <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-[#ffd2dd]">
-                First big project
+                Aftellen tot KL1603
               </p>
-              <div className="mt-auto">
-                <p className="font-mono text-xs uppercase tracking-[0.14em] text-white/65">
-                  Startpunt
-                </p>
-                <p className="mt-2 text-4xl font-semibold leading-none tracking-[-0.07em] sm:text-5xl">
-                  De reis
-                  <br />
-                  begint hier.
-                </p>
-                <p className="mt-5 max-w-xs text-sm leading-relaxed text-white/70">
-                  Nog geen tickets, tijden of route vastgelegd. Eerst bouwen we
-                  de plek waar alles straks samenkomt.
-                </p>
+              <p className="mt-2 text-sm leading-relaxed text-white/70">
+                Vertrek vanaf Amsterdam Schiphol · vrijdag 6 november · 09:45
+              </p>
+              <div className="mt-7">
+                <RomeCountdown />
               </div>
             </div>
           </div>
@@ -92,43 +71,100 @@ export default function Rome2026Page() {
           <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
             <div>
               <p className="font-mono text-xs uppercase tracking-[0.18em] text-[#ce0f3d]">
-                Wat er komt
+                Eerst: inpakken
               </p>
               <h2 className="mt-2 text-3xl font-semibold tracking-[-0.055em] sm:text-4xl">
-                Vier onderdelen. Eén reis.
+                Klein inpakken, groots reizen.
               </h2>
             </div>
             <p className="max-w-xs text-sm leading-relaxed text-[#b31c38]/65">
-              We voegen ze één voor één toe zodra we echte reisdetails hebben.
+              Belangrijk: de boeking toont geen ruimbagage en geen cabine-trolley.
             </p>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            {buildingBlocks.map((block) => (
-              <article
-                className={`relative min-h-52 overflow-hidden rounded-3xl p-6 sm:p-7 ${block.color}`}
-                key={block.number}
-              >
-                <div
-                  className="absolute -right-10 -top-10 h-32 w-32 rounded-full border-[16px]"
-                  style={{ borderColor: block.accent }}
-                />
-                <div className="relative flex h-full flex-col">
-                  <p className="font-mono text-[10px] uppercase tracking-[0.14em] opacity-60">
-                    Onderdeel {block.number}
-                  </p>
-                  <div className="mt-auto max-w-sm">
-                    <h3 className="text-3xl font-semibold tracking-[-0.06em]">
-                      {block.title}
-                    </h3>
-                    <p className="mt-3 text-sm leading-relaxed opacity-75">
-                      {block.description}
-                    </p>
-                  </div>
+          <div className="grid gap-4 lg:grid-cols-[0.85fr_1.15fr]">
+            <aside className="rounded-3xl bg-[#b31c38] p-7 text-white sm:p-8">
+              <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#ffd2dd]">
+                Jullie huidige boeking
+              </p>
+              <div className="mt-8 space-y-6">
+                <div>
+                  <p className="text-4xl font-semibold tracking-[-0.07em]">0×</p>
+                  <p className="mt-1 text-sm text-white/70">ruimbagage</p>
                 </div>
-              </article>
-            ))}
+                <div>
+                  <p className="text-4xl font-semibold tracking-[-0.07em]">0×</p>
+                  <p className="mt-1 text-sm text-white/70">
+                    handbagage / cabine-trolley
+                  </p>
+                </div>
+                <div>
+                  <p className="text-4xl font-semibold tracking-[-0.07em]">1×</p>
+                  <p className="mt-1 text-sm text-white/70">
+                    accessoire · max. 40 × 30 × 15 cm
+                  </p>
+                </div>
+              </div>
+              <p className="mt-8 border-t border-white/15 pt-5 text-sm leading-relaxed text-white/70">
+                De algemene cabine-trolleymaat is 55 × 35 × 25 cm, maar die is
+                bij deze boeking niet inbegrepen. Controleer of jullie hem via
+                My Trip willen bijkopen.
+              </p>
+            </aside>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="rounded-3xl bg-white/55 p-6 sm:p-7">
+                <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#b31c38]/60">
+                  Wel meenemen
+                </p>
+                <ul className="mt-5 space-y-4 text-sm leading-relaxed text-[#b31c38]/80">
+                  {packingAllowed.map((item) => (
+                    <li className="flex gap-3" key={item}>
+                      <span className="mt-1 text-[#ce0f3d]" aria-hidden="true">✓</span>
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div className="rounded-3xl bg-[#ce0f3d] p-6 text-white sm:p-7">
+                <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#ffd2dd]">
+                  Niet meenemen
+                </p>
+                <ul className="mt-5 space-y-4 text-sm leading-relaxed text-white/80">
+                  {packingNotAllowed.map((item) => (
+                    <li className="flex gap-3" key={item}>
+                      <span className="mt-1 text-[#fa9ab0]" aria-hidden="true">×</span>
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
           </div>
+
+          <div className="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-xs text-[#b31c38]/65">
+            <a className="underline underline-offset-4 hover:text-[#ce0f3d]" href="https://www.klm.nl/information/baggage/hand-baggage-allowance">
+              KLM: bagagevrijstelling
+            </a>
+            <a className="underline underline-offset-4 hover:text-[#ce0f3d]" href="https://www.klm.nl/information/baggage/restricted-items-hand-baggage">
+              KLM: toegestane en verboden voorwerpen
+            </a>
+            <a className="underline underline-offset-4 hover:text-[#ce0f3d]" href="https://www.schiphol.nl/nl/pagina/vloeistoffen-in-je-handbagage/">
+              Schiphol: vloeistoffen bij security
+            </a>
+          </div>
+        </section>
+
+        <section className="border-t border-[#b31c38]/20 py-12 sm:py-16">
+          <div className="mb-8">
+            <p className="font-mono text-xs uppercase tracking-[0.18em] text-[#ce0f3d]">
+              Agenda
+            </p>
+            <h2 className="mt-2 text-3xl font-semibold tracking-[-0.055em] sm:text-4xl">
+              Vier dagen. Jullie verhaal.
+            </h2>
+          </div>
+          <RomeAgenda />
         </section>
 
         <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-[#b31c38]/20 py-5 font-mono text-[10px] uppercase tracking-[0.12em] text-[#b31c38]/60">
