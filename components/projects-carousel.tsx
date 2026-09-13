@@ -1,0 +1,152 @@
+"use client";
+
+import { useRef, useState } from "react";
+
+const projects = [
+  {
+    number: "01",
+    title: "Rome ’26",
+    eyebrow: "Reisapp · binnenkort",
+    description:
+      "Planning, plekken, foto’s, Italiaanse zinnen en een klein beetje competitie voor vijf reizigers.",
+    color: "bg-[#215343] text-[#f7f5ee]",
+    labelColor: "text-[#c8f169]",
+    dotColor: "bg-[#ffc7a6]",
+    decoration: "border-[#c8f169]",
+  },
+  {
+    number: "02",
+    title: "Data",
+    eyebrow: "Visualisaties · in opbouw",
+    description:
+      "Dashboards, Python-experimenten en manieren om cijfers net iets minder saai te maken.",
+    color: "bg-[#ffc7a6] text-[#17231e]",
+    labelColor: "text-[#d64e25]",
+    dotColor: "bg-[#17231e]",
+    decoration: "border-[#d64e25]",
+  },
+  {
+    number: "03",
+    title: "Games",
+    eyebrow: "Spelen · in opbouw",
+    description:
+      "Van oude Python-projecten tot kleine webgames waar je even in kunt verdwijnen.",
+    color: "bg-[#a8d8ff] text-[#17231e]",
+    labelColor: "text-[#126a8f]",
+    dotColor: "bg-[#126a8f]",
+    decoration: "border-[#126a8f]",
+  },
+  {
+    number: "04",
+    title: "Playground",
+    eyebrow: "Experimenten · altijd open",
+    description:
+      "Een verzamelplek voor ideeën die nog geen categorie, plan of einddatum nodig hebben.",
+    color: "bg-[#c8f169] text-[#17231e]",
+    labelColor: "text-[#477622]",
+    dotColor: "bg-[#e95f32]",
+    decoration: "border-[#e95f32]",
+  },
+];
+
+export function ProjectsCarousel() {
+  const carouselRef = useRef<HTMLDivElement>(null);
+  const [activeProject, setActiveProject] = useState(0);
+
+  function scrollProjects(direction: "previous" | "next") {
+    const carousel = carouselRef.current;
+    const firstCard = carousel?.querySelector<HTMLElement>("article");
+
+    if (!carousel || !firstCard) return;
+
+    carousel.scrollBy({
+      left: (firstCard.offsetWidth + 16) * (direction === "next" ? 1 : -1),
+      behavior: "smooth",
+    });
+  }
+
+  function updateActiveProject() {
+    const carousel = carouselRef.current;
+    if (!carousel) return;
+
+    const cardWidth = carousel.querySelector<HTMLElement>("article")?.offsetWidth;
+    if (!cardWidth) return;
+
+    setActiveProject(Math.round(carousel.scrollLeft / (cardWidth + 16)));
+  }
+
+  return (
+    <div>
+      <div
+        aria-label="Projecten"
+        className="project-strip -mx-6 flex snap-x snap-mandatory gap-4 overflow-x-auto px-6 pb-4 sm:-mx-10 sm:px-10 lg:-mx-16 lg:px-16"
+        onScroll={updateActiveProject}
+        ref={carouselRef}
+        role="region"
+      >
+        {projects.map((project) => (
+          <article
+            className={`group relative aspect-square w-[84vw] shrink-0 snap-center overflow-hidden rounded-[2.5rem] p-6 shadow-sm transition duration-500 ease-out hover:-translate-y-2 hover:rotate-[-1deg] sm:w-[520px] sm:p-8 ${project.color}`}
+            key={project.number}
+          >
+            <div
+              className={`absolute -right-12 -top-12 h-44 w-44 rounded-full border-[18px] transition-transform duration-700 ease-out group-hover:scale-125 group-hover:-translate-x-4 group-hover:translate-y-4 ${project.decoration}`}
+            />
+            <div
+              className={`absolute bottom-8 right-8 h-4 w-4 rounded-full transition-transform duration-500 group-hover:scale-150 ${project.dotColor}`}
+            />
+            <div className="relative flex h-full flex-col">
+              <div className="flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.14em] opacity-60">
+                <span>Project {project.number}</span>
+                <span>↗</span>
+              </div>
+              <div className="mt-auto max-w-sm">
+                <p className={`font-mono text-[10px] uppercase tracking-[0.14em] ${project.labelColor}`}>
+                  {project.eyebrow}
+                </p>
+                <h2 className="mt-2 text-5xl font-semibold leading-none tracking-[-0.075em] sm:text-6xl">
+                  {project.title}
+                </h2>
+                <p className="mt-5 max-w-xs text-sm leading-relaxed opacity-70 sm:text-base">
+                  {project.description}
+                </p>
+              </div>
+            </div>
+          </article>
+        ))}
+      </div>
+
+      <div className="mt-3 flex items-center justify-between">
+        <div className="flex gap-2" aria-label="Actief project">
+          {projects.map((project, index) => (
+            <span
+              aria-label={`Project ${index + 1}`}
+              className={`h-1.5 rounded-full transition-all duration-300 ${
+                index === activeProject ? "w-7 bg-[#17231e]" : "w-1.5 bg-[#17231e]/20"
+              }`}
+              key={project.number}
+            />
+          ))}
+        </div>
+        <div className="flex gap-2">
+          <button
+            aria-label="Vorig project"
+            className="grid h-10 w-10 place-items-center rounded-full border border-[#17231e]/15 transition-colors hover:bg-[#17231e] hover:text-[#f7f5ee]"
+            onClick={() => scrollProjects("previous")}
+            type="button"
+          >
+            ←
+          </button>
+          <button
+            aria-label="Volgend project"
+            className="grid h-10 w-10 place-items-center rounded-full border border-[#17231e]/15 transition-colors hover:bg-[#17231e] hover:text-[#f7f5ee]"
+            onClick={() => scrollProjects("next")}
+            type="button"
+          >
+            →
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}

@@ -31,3 +31,11 @@ body {
   background: #c8f169;
   color: #17231e;
 }
+
+.project-strip {
+  scrollbar-width: none;
+}
+
+.project-strip::-webkit-scrollbar {
+  display: none;
+}
