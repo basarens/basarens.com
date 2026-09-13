@@ -50,7 +50,7 @@ export default function Rome2026Page() {
             </p>
           </div>
 
-          <div className="relative overflow-hidden rounded-[2.75rem] bg-[#b31c38] p-7 text-white shadow-[12px_14px_0_#ce0f3d] sm:p-9">
+          <div className="relative overflow-hidden rounded-[2.75rem] bg-[#b31c38] p-7 text-white shadow-[12px_14px_0_#76142a] sm:p-9">
             <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full border-[28px] border-[#fa9ab0]" />
             <div className="absolute -bottom-[72%] -left-[75%] h-[160%] w-[160%] rounded-full bg-[#ce0f3d]" />
             <div className="relative">
