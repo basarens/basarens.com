@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRef, useState, type PointerEvent } from "react";
 
 const projects = [
@@ -7,6 +8,7 @@ const projects = [
     number: "01",
     title: "Rome ’26",
     eyebrow: "Reisapp · binnenkort",
+    href: "/rome-2026",
     description:
       "Planning, plekken, foto’s, Italiaanse zinnen en een klein beetje competitie voor vijf reizigers.",
     mutedColor: "bg-[#b31c38]",
@@ -135,7 +137,18 @@ export function ProjectsCarousel() {
             <div className="relative flex h-full flex-col">
               <div className="flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.14em] opacity-60">
                 <span>Project {project.number}</span>
-                <span>↗</span>
+                {project.href ? (
+                  <Link
+                    aria-label={`Open ${project.title}`}
+                    className="grid h-8 w-8 place-items-center rounded-full transition-colors hover:bg-white/15"
+                    href={project.href}
+                    onPointerDown={(event) => event.stopPropagation()}
+                  >
+                    ↗
+                  </Link>
+                ) : (
+                  <span>↗</span>
+                )}
               </div>
               <div className="mt-auto max-w-sm">
                 <p className={`font-mono text-[10px] uppercase tracking-[0.14em] ${project.labelColor}`}>
