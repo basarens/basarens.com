@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, type PointerEvent } from "react";
 
 const projects = [
   {
@@ -51,6 +51,9 @@ const projects = [
 
 export function ProjectsCarousel() {
   const carouselRef = useRef<HTMLDivElement>(null);
+  const dragStartX = useRef(0);
+  const dragStartScrollLeft = useRef(0);
+  const isDragging = useRef(false);
   const [activeProject, setActiveProject] = useState(0);
 
   function scrollProjects(direction: "previous" | "next") {
@@ -75,11 +78,36 @@ export function ProjectsCarousel() {
     setActiveProject(Math.round(carousel.scrollLeft / (cardWidth + 16)));
   }
 
+  function startDragging(event: PointerEvent<HTMLDivElement>) {
+    const carousel = carouselRef.current;
+    if (!carousel) return;
+
+    isDragging.current = true;
+    dragStartX.current = event.clientX;
+    dragStartScrollLeft.current = carousel.scrollLeft;
+    carousel.setPointerCapture(event.pointerId);
+  }
+
+  function dragProjects(event: PointerEvent<HTMLDivElement>) {
+    const carousel = carouselRef.current;
+    if (!carousel || !isDragging.current) return;
+
+    carousel.scrollLeft = dragStartScrollLeft.current - (event.clientX - dragStartX.current);
+  }
+
+  function stopDragging() {
+    isDragging.current = false;
+  }
+
   return (
     <div>
       <div
         aria-label="Projecten"
-        className="project-strip -mx-6 flex snap-x snap-mandatory gap-4 overflow-x-auto px-6 pb-4 sm:-mx-10 sm:px-10 lg:-mx-16 lg:px-16"
+        className="project-strip -mx-6 flex cursor-grab snap-x snap-mandatory gap-4 overflow-x-auto px-6 pb-4 active:cursor-grabbing sm:-mx-10 sm:px-10 lg:-mx-16 lg:px-16"
+        onPointerCancel={stopDragging}
+        onPointerDown={startDragging}
+        onPointerMove={dragProjects}
+        onPointerUp={stopDragging}
         onScroll={updateActiveProject}
         ref={carouselRef}
         role="region"
