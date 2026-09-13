@@ -9,8 +9,9 @@ const projects = [
     eyebrow: "Reisapp · binnenkort",
     description:
       "Planning, plekken, foto’s, Italiaanse zinnen en een klein beetje competitie voor vijf reizigers.",
-    mutedColor: "bg-[#b31c38] text-white",
+    mutedColor: "bg-[#b31c38]",
     mainColor: "bg-[#ce0f3d]",
+    textColor: "text-white",
     labelColor: "text-[#ffd2dd]",
     accentColor: "#fa9ab0",
   },
@@ -20,8 +21,9 @@ const projects = [
     eyebrow: "Visualisaties · in opbouw",
     description:
       "Dashboards, Python-experimenten en manieren om cijfers net iets minder saai te maken.",
-    mutedColor: "bg-[#2994c9] text-white",
+    mutedColor: "bg-[#2994c9]",
     mainColor: "bg-[#54a7d9]",
+    textColor: "text-white",
     labelColor: "text-[#e7f6fc]",
     accentColor: "#bbdff3",
   },
@@ -31,8 +33,9 @@ const projects = [
     eyebrow: "Spelen · in opbouw",
     description:
       "Van oude Python-projecten tot kleine webgames waar je even in kunt verdwijnen.",
-    mutedColor: "bg-[#fbb01f] text-[#023a4f]",
+    mutedColor: "bg-[#fbb01f]",
     mainColor: "bg-[#fdc32d]",
+    textColor: "text-[#023a4f]",
     labelColor: "text-[#023a4f]",
     accentColor: "#fedeaf",
   },
@@ -42,8 +45,9 @@ const projects = [
     eyebrow: "Experimenten · altijd open",
     description:
       "Een verzamelplek voor ideeën die nog geen categorie, plan of einddatum nodig hebben.",
-    mutedColor: "bg-[#0d5748] text-white",
+    mutedColor: "bg-[#0d5748]",
     mainColor: "bg-[#006853]",
+    textColor: "text-white",
     labelColor: "text-[#d7f2dd]",
     accentColor: "#bbdfb2",
   },
@@ -114,11 +118,11 @@ export function ProjectsCarousel() {
       >
         {projects.map((project) => (
           <article
-            className={`group relative aspect-square w-[84vw] shrink-0 snap-center overflow-hidden rounded-[2.5rem] p-6 shadow-sm transition duration-500 ease-out hover:-translate-y-2 hover:rotate-[-1deg] sm:w-[520px] sm:p-8 ${project.mutedColor}`}
+            className={`group relative aspect-square w-[84vw] shrink-0 snap-center overflow-hidden rounded-[2.5rem] p-6 shadow-sm transition duration-500 ease-out hover:-translate-y-2 hover:rotate-[-1deg] sm:w-[520px] sm:p-8 ${project.mainColor} ${project.textColor}`}
             key={project.number}
           >
             <div
-              className={`absolute -left-[28%] -top-[62%] h-[125%] w-[156%] rounded-full transition-transform duration-700 ease-out group-hover:scale-105 group-hover:-translate-y-3 ${project.mainColor}`}
+              className={`absolute -bottom-[62%] -left-[13%] h-[126%] w-[126%] rounded-full transition-transform duration-700 ease-out group-hover:scale-105 group-hover:-translate-y-3 ${project.mutedColor}`}
             />
             <div
               className="absolute -right-12 -top-12 h-44 w-44 rounded-full border-[18px] transition-transform duration-700 ease-out group-hover:scale-125 group-hover:-translate-x-4 group-hover:translate-y-4"
