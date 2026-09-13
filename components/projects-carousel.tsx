@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useRef, useState, type PointerEvent } from "react";
 
 const projects = [
@@ -56,10 +56,12 @@ const projects = [
 ];
 
 export function ProjectsCarousel() {
+  const router = useRouter();
   const carouselRef = useRef<HTMLDivElement>(null);
   const dragStartX = useRef(0);
   const dragStartScrollLeft = useRef(0);
   const isDragging = useRef(false);
+  const draggedSincePointerDown = useRef(false);
   const [activeProject, setActiveProject] = useState(0);
 
   function scrollProjects(direction: "previous" | "next") {
@@ -89,6 +91,7 @@ export function ProjectsCarousel() {
     if (!carousel) return;
 
     isDragging.current = true;
+    draggedSincePointerDown.current = false;
     dragStartX.current = event.clientX;
     dragStartScrollLeft.current = carousel.scrollLeft;
     carousel.setPointerCapture(event.pointerId);
@@ -98,11 +101,26 @@ export function ProjectsCarousel() {
     const carousel = carouselRef.current;
     if (!carousel || !isDragging.current) return;
 
-    carousel.scrollLeft = dragStartScrollLeft.current - (event.clientX - dragStartX.current);
+    const distance = event.clientX - dragStartX.current;
+
+    if (Math.abs(distance) > 8) {
+      draggedSincePointerDown.current = true;
+    }
+
+    carousel.scrollLeft = dragStartScrollLeft.current - distance;
   }
 
   function stopDragging() {
     isDragging.current = false;
+  }
+
+  function openProject(href?: string) {
+    if (!href || draggedSincePointerDown.current) {
+      draggedSincePointerDown.current = false;
+      return;
+    }
+
+    router.push(href);
   }
 
   return (
@@ -120,7 +138,17 @@ export function ProjectsCarousel() {
       >
         {projects.map((project) => (
           <article
-            className={`group relative aspect-square w-[84vw] shrink-0 snap-center overflow-hidden rounded-[2.5rem] p-6 shadow-sm transition duration-500 ease-out hover:-translate-y-2 hover:rotate-[-1deg] sm:w-[520px] sm:p-8 ${project.mainColor} ${project.textColor}`}
+            aria-label={project.href ? `Open ${project.title}` : undefined}
+            className={`group relative aspect-square w-[84vw] shrink-0 snap-center overflow-hidden rounded-[2.5rem] p-6 shadow-sm transition duration-500 ease-out hover:-translate-y-2 hover:rotate-[-1deg] sm:w-[520px] sm:p-8 ${project.href ? "cursor-pointer" : ""} ${project.mainColor} ${project.textColor}`}
+            onClick={() => openProject(project.href)}
+            onKeyDown={(event) => {
+              if (project.href && (event.key === "Enter" || event.key === " ")) {
+                event.preventDefault();
+                openProject(project.href);
+              }
+            }}
+            role={project.href ? "link" : undefined}
+            tabIndex={project.href ? 0 : undefined}
             key={project.number}
           >
             <div
@@ -138,14 +166,12 @@ export function ProjectsCarousel() {
               <div className="flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.14em] opacity-60">
                 <span>Project {project.number}</span>
                 {project.href ? (
-                  <Link
-                    aria-label={`Open ${project.title}`}
-                    className="grid h-8 w-8 place-items-center rounded-full transition-colors hover:bg-white/15"
-                    href={project.href}
-                    onPointerDown={(event) => event.stopPropagation()}
+                  <span
+                    aria-hidden="true"
+                    className="grid h-8 w-8 place-items-center rounded-full transition-colors group-hover:bg-white/15"
                   >
                     ↗
-                  </Link>
+                  </span>
                 ) : (
                   <span>↗</span>
                 )}
