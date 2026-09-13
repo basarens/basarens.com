@@ -122,7 +122,7 @@ export function ProjectsCarousel() {
             key={project.number}
           >
             <div
-              className={`absolute -bottom-[62%] -left-[13%] h-[126%] w-[126%] rounded-full transition-transform duration-700 ease-out group-hover:scale-105 group-hover:-translate-y-3 ${project.mutedColor}`}
+              className={`absolute -bottom-[87%] -left-[87%] h-[174%] w-[174%] rounded-full transition-transform duration-700 ease-out group-hover:scale-105 group-hover:-translate-y-3 ${project.mutedColor}`}
             />
             <div
               className="absolute -right-12 -top-12 h-44 w-44 rounded-full border-[18px] transition-transform duration-700 ease-out group-hover:scale-125 group-hover:-translate-x-4 group-hover:translate-y-4"
