@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { RomeAgenda } from "@/components/rome-agenda";
 import { RomeCountdown } from "@/components/rome-countdown";
+import { RomePackingChecklist } from "@/components/rome-packing-checklist";
 import { RomePhotoAlbum } from "@/components/rome-photo-album";
 
 const packingAllowed = [
@@ -153,6 +154,18 @@ export default function Rome2026Page() {
             <a className="underline underline-offset-4 hover:text-[#ce0f3d]" href="https://www.schiphol.nl/nl/pagina/vloeistoffen-in-je-handbagage/">
               Schiphol: vloeistoffen bij security
             </a>
+          </div>
+
+          <div className="mt-10 border-t border-[#b31c38]/20 pt-10 sm:mt-12 sm:pt-12">
+            <div className="mb-7">
+              <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#ce0f3d]">
+                Onze checklist
+              </p>
+              <h3 className="mt-2 text-2xl font-semibold tracking-[-0.055em] sm:text-3xl">
+                Rustig afvinken, goed vertrekken.
+              </h3>
+            </div>
+            <RomePackingChecklist />
           </div>
         </section>
 
