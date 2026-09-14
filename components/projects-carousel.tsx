@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useRef, useState, type PointerEvent } from "react";
 
 const projects = [
@@ -56,7 +56,6 @@ const projects = [
 ];
 
 export function ProjectsCarousel() {
-  const router = useRouter();
   const carouselRef = useRef<HTMLDivElement>(null);
   const dragStartX = useRef(0);
   const dragStartScrollLeft = useRef(0);
@@ -114,13 +113,77 @@ export function ProjectsCarousel() {
     isDragging.current = false;
   }
 
-  function openProject(href?: string) {
-    if (!href || draggedSincePointerDown.current) {
-      draggedSincePointerDown.current = false;
-      return;
+  function renderProjectCard(project: (typeof projects)[number]) {
+    const card = (
+      <article
+        className={`group relative aspect-square w-full overflow-hidden rounded-[2.5rem] p-6 shadow-sm transition duration-500 ease-out hover:-translate-y-2 hover:rotate-[-1deg] sm:p-8 ${project.mainColor} ${project.textColor}`}
+      >
+        <div
+          className={`absolute -bottom-[87%] -left-[87%] h-[174%] w-[174%] rounded-full transition-transform duration-700 ease-out group-hover:scale-105 group-hover:-translate-y-3 ${project.mutedColor}`}
+        />
+        <div
+          className="absolute -right-12 -top-12 h-44 w-44 rounded-full border-[18px] transition-transform duration-700 ease-out group-hover:scale-125 group-hover:-translate-x-4 group-hover:translate-y-4"
+          style={{ borderColor: project.accentColor }}
+        />
+        <div
+          className="absolute bottom-8 right-8 h-4 w-4 rounded-full transition-transform duration-500 group-hover:scale-150"
+          style={{ backgroundColor: project.accentColor }}
+        />
+        <div className="relative flex h-full flex-col">
+          <div className="flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.14em] opacity-60">
+            <span>Project {project.number}</span>
+            {project.href ? (
+              <span
+                aria-hidden="true"
+                className="grid h-8 w-8 place-items-center rounded-full transition-colors group-hover:bg-white/15"
+              >
+                ↗
+              </span>
+            ) : (
+              <span>↗</span>
+            )}
+          </div>
+          <div className="mt-auto max-w-sm">
+            <p className={`font-mono text-[10px] uppercase tracking-[0.14em] ${project.labelColor}`}>
+              {project.eyebrow}
+            </p>
+            <h2 className="mt-2 text-5xl font-semibold leading-none tracking-[-0.075em] sm:text-6xl">
+              {project.title}
+            </h2>
+            <p className="mt-5 max-w-xs text-sm leading-relaxed opacity-70 sm:text-base">
+              {project.description}
+            </p>
+          </div>
+        </div>
+      </article>
+    );
+
+    const wrapperClass = "w-[84vw] shrink-0 snap-center sm:w-[520px]";
+
+    if (!project.href) {
+      return (
+        <div className={wrapperClass} key={project.number}>
+          {card}
+        </div>
+      );
     }
 
-    router.push(href);
+    return (
+      <Link
+        aria-label={`Open ${project.title}`}
+        className={`${wrapperClass} block cursor-pointer`}
+        href={project.href}
+        key={project.number}
+        onNavigate={(event) => {
+          if (draggedSincePointerDown.current) {
+            event.preventDefault();
+            draggedSincePointerDown.current = false;
+          }
+        }}
+      >
+        {card}
+      </Link>
+    );
   }
 
   return (
@@ -136,60 +199,7 @@ export function ProjectsCarousel() {
         ref={carouselRef}
         role="region"
       >
-        {projects.map((project) => (
-          <article
-            aria-label={project.href ? `Open ${project.title}` : undefined}
-            className={`group relative aspect-square w-[84vw] shrink-0 snap-center overflow-hidden rounded-[2.5rem] p-6 shadow-sm transition duration-500 ease-out hover:-translate-y-2 hover:rotate-[-1deg] sm:w-[520px] sm:p-8 ${project.href ? "cursor-pointer" : ""} ${project.mainColor} ${project.textColor}`}
-            onClick={() => openProject(project.href)}
-            onKeyDown={(event) => {
-              if (project.href && (event.key === "Enter" || event.key === " ")) {
-                event.preventDefault();
-                openProject(project.href);
-              }
-            }}
-            role={project.href ? "link" : undefined}
-            tabIndex={project.href ? 0 : undefined}
-            key={project.number}
-          >
-            <div
-              className={`absolute -bottom-[87%] -left-[87%] h-[174%] w-[174%] rounded-full transition-transform duration-700 ease-out group-hover:scale-105 group-hover:-translate-y-3 ${project.mutedColor}`}
-            />
-            <div
-              className="absolute -right-12 -top-12 h-44 w-44 rounded-full border-[18px] transition-transform duration-700 ease-out group-hover:scale-125 group-hover:-translate-x-4 group-hover:translate-y-4"
-              style={{ borderColor: project.accentColor }}
-            />
-            <div
-              className="absolute bottom-8 right-8 h-4 w-4 rounded-full transition-transform duration-500 group-hover:scale-150"
-              style={{ backgroundColor: project.accentColor }}
-            />
-            <div className="relative flex h-full flex-col">
-              <div className="flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.14em] opacity-60">
-                <span>Project {project.number}</span>
-                {project.href ? (
-                  <span
-                    aria-hidden="true"
-                    className="grid h-8 w-8 place-items-center rounded-full transition-colors group-hover:bg-white/15"
-                  >
-                    ↗
-                  </span>
-                ) : (
-                  <span>↗</span>
-                )}
-              </div>
-              <div className="mt-auto max-w-sm">
-                <p className={`font-mono text-[10px] uppercase tracking-[0.14em] ${project.labelColor}`}>
-                  {project.eyebrow}
-                </p>
-                <h2 className="mt-2 text-5xl font-semibold leading-none tracking-[-0.075em] sm:text-6xl">
-                  {project.title}
-                </h2>
-                <p className="mt-5 max-w-xs text-sm leading-relaxed opacity-70 sm:text-base">
-                  {project.description}
-                </p>
-              </div>
-            </div>
-          </article>
-        ))}
+        {projects.map(renderProjectCard)}
       </div>
 
       <div className="mt-3 flex items-center justify-between">
