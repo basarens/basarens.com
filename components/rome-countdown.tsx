@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 
 const departure = new Date("2026-11-06T09:45:00+01:00");
+const initialTime = { days: 0, hours: 0, minutes: 0, seconds: 0 };
 
 function getTimeRemaining() {
   const difference = Math.max(0, departure.getTime() - Date.now());
@@ -16,14 +17,21 @@ function getTimeRemaining() {
 }
 
 export function RomeCountdown() {
-  const [timeRemaining, setTimeRemaining] = useState(getTimeRemaining);
+  const [timeRemaining, setTimeRemaining] = useState(initialTime);
 
   useEffect(() => {
+    const initialUpdate = window.setTimeout(() => {
+      setTimeRemaining(getTimeRemaining());
+    }, 0);
+
     const interval = window.setInterval(() => {
       setTimeRemaining(getTimeRemaining());
     }, 1_000);
 
-    return () => window.clearInterval(interval);
+    return () => {
+      window.clearTimeout(initialUpdate);
+      window.clearInterval(interval);
+    };
   }, []);
 
   const units = [

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const days = [
   {
@@ -68,113 +68,132 @@ const days = [
 ];
 
 export function RomeAgenda() {
-  const carouselRef = useRef<HTMLDivElement>(null);
+  const dayRefs = useRef<Array<HTMLElement | null>>([]);
   const [activeDay, setActiveDay] = useState(0);
 
-  function scrollDays(direction: "previous" | "next") {
-    const carousel = carouselRef.current;
-    const firstDay = carousel?.querySelector<HTMLElement>("button");
-    if (!carousel || !firstDay) return;
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visibleDays = entries.filter((entry) => entry.isIntersecting);
+        if (visibleDays.length === 0) return;
 
-    carousel.scrollBy({
-      left: (firstDay.offsetWidth + 16) * (direction === "next" ? 1 : -1),
-      behavior: "smooth",
+        const mostVisibleDay = visibleDays.reduce((current, next) =>
+          next.intersectionRatio > current.intersectionRatio ? next : current,
+        );
+        const index = Number(mostVisibleDay.target.getAttribute("data-day-index"));
+
+        if (!Number.isNaN(index)) {
+          setActiveDay(index);
+        }
+      },
+      { rootMargin: "-28% 0px -45% 0px", threshold: [0.15, 0.4, 0.7] },
+    );
+
+    dayRefs.current.forEach((day) => {
+      if (day) observer.observe(day);
     });
+
+    return () => observer.disconnect();
+  }, []);
+
+  function scrollToDay(index: number) {
+    dayRefs.current[index]?.scrollIntoView({ behavior: "smooth", block: "center" });
   }
 
-  const day = days[activeDay];
-
   return (
-    <div>
-      <div
-        aria-label="Reisdagen"
-        className="project-strip -mx-6 flex snap-x snap-mandatory gap-4 overflow-x-auto px-6 pb-5 sm:-mx-10 sm:px-10 lg:-mx-16 lg:px-16"
-        ref={carouselRef}
-        role="tablist"
-      >
-        {days.map((item, index) => (
-          <button
-            aria-controls="agenda-detail"
-            aria-selected={index === activeDay}
-            className={`group relative aspect-square w-[62vw] shrink-0 snap-center overflow-hidden rounded-full p-6 text-left transition duration-500 hover:-translate-y-2 hover:rotate-[-3deg] sm:w-72 sm:p-8 ${item.color} ${
-              index === activeDay ? "scale-100" : "scale-[0.94] opacity-70"
-            }`}
-            key={item.number}
-            onClick={() => setActiveDay(index)}
-            role="tab"
-            type="button"
-          >
-            <span
-              className="absolute -right-9 -top-9 h-32 w-32 rounded-full border-[16px] transition-transform duration-700 group-hover:scale-125"
-              style={{ borderColor: item.accent }}
-            />
-            <span className="relative block h-full">
-              <span className={`absolute left-0 top-0 font-mono text-[10px] uppercase tracking-[0.14em] ${item.labelColor}`}>
-                {item.weekday}
-              </span>
-              <span className="absolute inset-0 grid place-items-center text-7xl font-semibold leading-none tracking-[-0.09em] sm:text-8xl">
-                {item.number}
-              </span>
-              <span className="absolute bottom-0 left-0 font-mono text-[10px] uppercase tracking-[0.14em] opacity-70">
-                {item.month}
-              </span>
-            </span>
-          </button>
-        ))}
-      </div>
-
-      <div className="mt-1 flex items-center justify-between">
-        <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#b31c38]/60">
-          Tik op een dag voor de planning
+    <div className="grid grid-cols-[minmax(0,1fr)_2.5rem] gap-3 sm:grid-cols-[minmax(0,1fr)_3rem] sm:gap-6">
+      <div>
+        <p className="mb-8 font-mono text-[10px] uppercase tracking-[0.14em] text-[#b31c38]/60">
+          Scroll door de dagen
         </p>
-        <div className="flex gap-2">
-          <button
-            aria-label="Vorige reisdag"
-            className="grid h-10 w-10 place-items-center rounded-full border border-[#b31c38]/20 transition-colors hover:bg-[#b31c38] hover:text-white"
-            onClick={() => scrollDays("previous")}
-            type="button"
-          >
-            ←
-          </button>
-          <button
-            aria-label="Volgende reisdag"
-            className="grid h-10 w-10 place-items-center rounded-full border border-[#b31c38]/20 transition-colors hover:bg-[#b31c38] hover:text-white"
-            onClick={() => scrollDays("next")}
-            type="button"
-          >
-            →
-          </button>
+
+        <div className="space-y-14 sm:space-y-20">
+          {days.map((day, index) => (
+            <section
+              aria-labelledby={`day-${day.number}-title`}
+              className="scroll-mt-8 border-b border-[#b31c38]/20 pb-14 last:border-0 last:pb-0 sm:pb-20"
+              data-day-index={index}
+              id={`day-${day.number}`}
+              key={day.number}
+              ref={(element) => {
+                dayRefs.current[index] = element;
+              }}
+            >
+              <div className="grid grid-cols-[7rem_minmax(0,1fr)] items-center gap-5 sm:grid-cols-[12rem_minmax(0,1fr)] sm:gap-8">
+                <div
+                  className={`group relative aspect-square overflow-hidden rounded-full p-4 shadow-[7px_8px_0_#76142a] transition-transform duration-500 sm:p-6 ${day.color} ${
+                    activeDay === index ? "scale-100" : "scale-[0.94]"
+                  }`}
+                >
+                  <span
+                    className="absolute -right-7 -top-7 h-24 w-24 rounded-full border-[13px] transition-transform duration-700 group-hover:scale-125 sm:h-32 sm:w-32 sm:border-[16px]"
+                    style={{ borderColor: day.accent }}
+                  />
+                  <span className="relative block h-full">
+                    <span className={`absolute left-0 top-0 font-mono text-[8px] uppercase tracking-[0.12em] sm:text-[10px] sm:tracking-[0.14em] ${day.labelColor}`}>
+                      {day.weekday}
+                    </span>
+                    <span className="absolute inset-0 grid place-items-center text-5xl font-semibold leading-none tracking-[-0.09em] sm:text-7xl">
+                      {day.number}
+                    </span>
+                    <span className="absolute bottom-0 left-0 font-mono text-[8px] uppercase tracking-[0.12em] opacity-70 sm:text-[10px] sm:tracking-[0.14em]">
+                      {day.month}
+                    </span>
+                  </span>
+                </div>
+
+                <div>
+                  <p className="font-mono text-[9px] uppercase tracking-[0.14em] text-[#ce0f3d] sm:text-[10px]">
+                    {day.weekday} · {day.number} {day.month}
+                  </p>
+                  <h3 className="mt-2 text-3xl font-semibold leading-[0.92] tracking-[-0.07em] sm:mt-3 sm:text-5xl" id={`day-${day.number}-title`}>
+                    {day.title}
+                  </h3>
+                  <p className="mt-4 text-sm leading-relaxed text-[#b31c38]/70 sm:mt-5 sm:text-base">
+                    {day.intro}
+                  </p>
+                </div>
+              </div>
+
+              <ol className="mt-8 border-l border-[#b31c38]/20 sm:mt-10 sm:ml-[13.5rem]">
+                {day.items.map(([time, description]) => (
+                  <li className="relative grid gap-2 border-b border-[#b31c38]/15 py-5 pl-6 last:border-0 sm:grid-cols-[6rem_1fr]" key={time}>
+                    <span className="absolute -left-1.5 top-6 h-3 w-3 rounded-full bg-[#ce0f3d]" />
+                    <p className="font-mono text-[10px] uppercase tracking-[0.12em] text-[#b31c38]/60">{time}</p>
+                    <p className="text-sm leading-relaxed text-[#b31c38]/80">{description}</p>
+                  </li>
+                ))}
+              </ol>
+            </section>
+          ))}
         </div>
       </div>
 
-      <section
-        className="mt-8 border-y border-[#b31c38]/20 py-8 sm:grid sm:grid-cols-[0.8fr_1.2fr] sm:gap-10 sm:py-10"
-        id="agenda-detail"
-        role="tabpanel"
-      >
-        <div>
-          <p className="font-mono text-xs uppercase tracking-[0.18em] text-[#ce0f3d]">
-            {day.weekday} {day.number} {day.month}
-          </p>
-          <h3 className="mt-3 text-4xl font-semibold tracking-[-0.07em] sm:text-5xl">
-            {day.title}
-          </h3>
-          <p className="mt-5 max-w-sm text-sm leading-relaxed text-[#b31c38]/70 sm:text-base">
-            {day.intro}
-          </p>
-        </div>
-        <ol className="mt-8 border-l border-[#b31c38]/20 sm:mt-0">
-          {day.items.map(([time, description]) => (
-            <li className="relative grid gap-2 border-b border-[#b31c38]/15 py-5 pl-6 last:border-0 sm:grid-cols-[6rem_1fr]" key={time}>
-              <span className="absolute -left-1.5 top-6 h-3 w-3 rounded-full bg-[#ce0f3d]" />
-              <p className="font-mono text-[10px] uppercase tracking-[0.12em] text-[#b31c38]/60">
-                {time}
-              </p>
-              <p className="text-sm leading-relaxed text-[#b31c38]/80">{description}</p>
-            </li>
-          ))}
+      <nav aria-label="Spring naar een reisdag" className="sticky top-5 h-fit self-start pt-8 sm:top-8">
+        <ol className="relative flex flex-col items-center gap-4 before:absolute before:inset-y-3 before:w-px before:bg-[#b31c38]/20">
+          {days.map((day, index) => {
+            const isActive = activeDay === index;
+
+            return (
+              <li className="relative" key={day.number}>
+                <button
+                  aria-current={isActive ? "step" : undefined}
+                  aria-label={`Ga naar ${day.weekday} ${day.number} ${day.month}`}
+                  className={`grid place-items-center rounded-full border transition-all duration-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#ce0f3d] ${
+                    isActive
+                      ? "h-10 w-10 border-[#ce0f3d] bg-[#ce0f3d] font-mono text-[10px] text-white shadow-[3px_4px_0_#76142a]"
+                      : "h-5 w-5 border-[#b31c38]/25 bg-[#f4f4f4] hover:scale-125 hover:border-[#ce0f3d]"
+                  }`}
+                  onClick={() => scrollToDay(index)}
+                  type="button"
+                >
+                  {isActive ? day.number : <span className="h-1.5 w-1.5 rounded-full bg-[#b31c38]/50" />}
+                </button>
+              </li>
+            );
+          })}
         </ol>
-      </section>
+      </nav>
     </div>
   );
 }
