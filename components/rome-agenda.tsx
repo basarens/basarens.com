@@ -14,7 +14,7 @@ const days = [
     intro: "De reisdag: van Oldenzaal naar Schiphol, daarna door naar Fiumicino en jullie verblijf in Prati.",
     items: [
       ["Nog te kiezen", "Samen naar Schiphol — trein vanuit Oldenzaal of met de auto."],
-      ["09:45", "KL1603 vertrekt vanaf Amsterdam Schiphol (AMS). Stoel 17B."],
+      ["09:45", "KL1603 vertrekt vanaf Amsterdam Schiphol (AMS)."],
       ["11:55", "Geplande aankomst op Rome Fiumicino (FCO)."],
       ["Daarna", "Transfer naar Via Properzio 32 in Rome. Route kiezen we later."],
     ],
@@ -29,7 +29,7 @@ const days = [
     title: "De eerste volle dag",
     intro: "Hier komt jullie eerste echte Rome-dag te staan: ontbijt, plannen en de eerste plekken om te ontdekken.",
     items: [
-      ["Ochtend", "Nog open — samen invullen zodra de eerste activiteiten vaststaan."],
+      ["10:45 — 11:45", "Rondleiding door de necropolis."],
       ["Middag", "Nog open — ruimte voor de eerste route door Rome."],
       ["Avond", "Nog open — een goed moment voor eten, drinken en de eerste foto’s."],
     ],
@@ -41,7 +41,7 @@ const days = [
     color: "bg-[#ce0f3d] text-white",
     accent: "#fa9ab0",
     labelColor: "text-[#ffd2dd]",
-    title: "Nog een dag Rome",
+    title: "Rome blijft verrassen",
     intro: "De agenda is bewust nog leeg. Zo kunnen jullie plannen zonder dat de app al doet alsof alles vastligt.",
     items: [
       ["Ochtend", "Nog open — bijvoorbeeld een wijk, museum of markt."],
@@ -60,7 +60,7 @@ const days = [
     intro: "Uitchecken, terug naar Fiumicino en weer naar Amsterdam. Daarna kiezen jullie de route terug naar Oldenzaal.",
     items: [
       ["Ochtend", "Uitchecken en van Via Properzio 32 naar Fiumicino (FCO)."],
-      ["12:45", "KL1604 vertrekt vanaf Fiumicino. Stoel 17F."],
+      ["12:45", "KL1604 vertrekt vanaf Fiumicino."],
       ["15:20", "Geplande aankomst op Amsterdam Schiphol (AMS)."],
       ["Daarna", "Samen terug naar Oldenzaal — trein of auto nog kiezen."],
     ],

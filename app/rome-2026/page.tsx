@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { RomeAgenda } from "@/components/rome-agenda";
 import { RomeCountdown } from "@/components/rome-countdown";
+import { RomePhotoAlbum } from "@/components/rome-photo-album";
 
 const packingAllowed = [
   "1 accessoire onder de stoel: maximaal 40 × 30 × 15 cm.",
@@ -165,6 +166,18 @@ export default function Rome2026Page() {
             </h2>
           </div>
           <RomeAgenda />
+        </section>
+
+        <section className="border-t border-[#b31c38]/20 py-12 sm:py-16">
+          <div className="mb-8">
+            <p className="font-mono text-xs uppercase tracking-[0.18em] text-[#ce0f3d]">
+              Fotoalbum
+            </p>
+            <h2 className="mt-2 text-3xl font-semibold tracking-[-0.055em] sm:text-4xl">
+              Jullie Rome in beelden.
+            </h2>
+          </div>
+          <RomePhotoAlbum />
         </section>
 
         <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-[#b31c38]/20 py-5 font-mono text-[10px] uppercase tracking-[0.12em] text-[#b31c38]/60">
