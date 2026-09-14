@@ -86,7 +86,7 @@ export default function Rome2026Page() {
           <div className="grid gap-4 lg:grid-cols-[0.85fr_1.15fr]">
             <aside className="rounded-3xl bg-[#b31c38] p-7 text-white sm:p-8">
               <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#ffd2dd]">
-                Jullie huidige boeking
+                Onze huidige boeking
               </p>
               <div className="mt-8 space-y-6">
                 <div>
@@ -108,8 +108,8 @@ export default function Rome2026Page() {
               </div>
               <p className="mt-8 border-t border-white/15 pt-5 text-sm leading-relaxed text-white/70">
                 De algemene cabine-trolleymaat is 55 × 35 × 25 cm, maar die is
-                bij deze boeking niet inbegrepen. Controleer of jullie hem via
-                My Trip willen bijkopen.
+                bij deze boeking niet inbegrepen. Als we een cabine-trolley
+                willen bijkopen, regelen we dat later via My Trip.
               </p>
             </aside>
 
@@ -162,7 +162,7 @@ export default function Rome2026Page() {
               Agenda
             </p>
             <h2 className="mt-2 text-3xl font-semibold tracking-[-0.055em] sm:text-4xl">
-              Vier dagen. Jullie verhaal.
+              Vier dagen. Ons verhaal.
             </h2>
           </div>
           <RomeAgenda />
@@ -174,7 +174,7 @@ export default function Rome2026Page() {
               Fotoalbum
             </p>
             <h2 className="mt-2 text-3xl font-semibold tracking-[-0.055em] sm:text-4xl">
-              Jullie Rome in beelden.
+              Ons Rome in beelden.
             </h2>
           </div>
           <RomePhotoAlbum />

@@ -11,7 +11,7 @@ const days = [
     accent: "#fa9ab0",
     labelColor: "text-[#ffd2dd]",
     title: "Op weg naar Roma",
-    intro: "De reisdag: van Oldenzaal naar Schiphol, daarna door naar Fiumicino en jullie verblijf in Prati.",
+    intro: "De reisdag: van Oldenzaal naar Schiphol, daarna door naar Fiumicino en ons verblijf in Prati.",
     items: [
       ["Nog te kiezen", "Samen naar Schiphol — trein vanuit Oldenzaal of met de auto."],
       ["09:45", "KL1603 vertrekt vanaf Amsterdam Schiphol (AMS)."],
@@ -27,7 +27,7 @@ const days = [
     accent: "#ffd2dd",
     labelColor: "text-[#ffd2dd]",
     title: "De eerste volle dag",
-    intro: "Hier komt jullie eerste echte Rome-dag te staan: ontbijt, plannen en de eerste plekken om te ontdekken.",
+    intro: "Hier komt onze eerste echte Rome-dag te staan: ontbijt, plannen en de eerste plekken om te ontdekken.",
     items: [
       ["10:45 — 11:45", "Rondleiding door de necropolis."],
       ["Middag", "Nog open — ruimte voor de eerste route door Rome."],
@@ -42,7 +42,7 @@ const days = [
     accent: "#fa9ab0",
     labelColor: "text-[#ffd2dd]",
     title: "Rome blijft verrassen",
-    intro: "De agenda is bewust nog leeg. Zo kunnen jullie plannen zonder dat de app al doet alsof alles vastligt.",
+    intro: "De agenda is bewust nog leeg. Zo kunnen we plannen zonder dat de app al doet alsof alles vastligt.",
     items: [
       ["Ochtend", "Nog open — bijvoorbeeld een wijk, museum of markt."],
       ["Middag", "Nog open — hier komt later de gezamenlijke activiteit."],
@@ -57,7 +57,7 @@ const days = [
     accent: "#ffd2dd",
     labelColor: "text-[#fa9ab0]",
     title: "Arrivederci, Roma",
-    intro: "Uitchecken, terug naar Fiumicino en weer naar Amsterdam. Daarna kiezen jullie de route terug naar Oldenzaal.",
+    intro: "Uitchecken, terug naar Fiumicino en weer naar Amsterdam. Daarna kiezen we de route terug naar Oldenzaal.",
     items: [
       ["Ochtend", "Uitchecken en van Via Properzio 32 naar Fiumicino (FCO)."],
       ["12:45", "KL1604 vertrekt vanaf Fiumicino."],
