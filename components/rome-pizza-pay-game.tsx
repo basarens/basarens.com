@@ -114,9 +114,17 @@ export function RomePizzaPayGame() {
                   <span className="absolute bottom-[30%] right-[19%] h-6 w-6 rounded-full border-2 border-[#76142a]/30 bg-[#ffd2dd]" />
                   <span className="absolute left-[15%] top-[54%] h-6 w-6 rounded-full border-2 border-[#76142a]/30 bg-[#ffd2dd]" />
                 </div>
-                <div className="absolute inset-[37%] grid place-items-center rounded-full border-4 border-[#ffd2dd] bg-[#fbb01f] text-center font-mono text-[9px] font-bold uppercase tracking-[0.1em] text-[#76142a] shadow-[0_3px_0_#9e4a25]">
-                  <span>Wie<br />betaalt?</span>
-                </div>
+                <button
+                  aria-label="Draai de pizza"
+                  className="absolute inset-[37%] grid place-items-center rounded-full border-4 border-[#ffd2dd] bg-[#fbb01f] text-center font-mono text-[9px] font-bold uppercase tracking-[0.1em] text-[#76142a] shadow-[0_3px_0_#9e4a25] transition-transform hover:scale-110 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#ce0f3d] disabled:cursor-wait disabled:opacity-70"
+                  disabled={isSpinning}
+                  onClick={spinPizza}
+                  type="button"
+                >
+                  <span>
+                    {isSpinning ? "Draait…" : winner ? <>Opnieuw<br />draaien</> : <>Draai de<br />pizza</>}
+                  </span>
+                </button>
               </div>
 
               <div aria-live="polite" className={`mt-7 rounded-3xl p-5 text-center transition-colors ${winner ? "bg-[#76142a] text-white" : "bg-[#ffd2dd]/70"}`}>
@@ -139,15 +147,6 @@ export function RomePizzaPayGame() {
                   </div>
                 ))}
               </div>
-
-              <button
-                className="mt-7 w-full rounded-full bg-[#ce0f3d] px-6 py-4 text-base font-semibold text-white shadow-[5px_6px_0_#76142a] transition-transform hover:-translate-y-1 disabled:cursor-wait disabled:opacity-70"
-                disabled={isSpinning}
-                onClick={spinPizza}
-                type="button"
-              >
-                {isSpinning ? "De pizza draait…" : winner ? "Nog een pizza draaien" : "Draai de pizza"}
-              </button>
             </div>
           </div>
         </div>

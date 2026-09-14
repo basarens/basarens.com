@@ -113,7 +113,7 @@ export function ProjectsCarousel() {
   function renderProjectCard(project: (typeof projects)[number]) {
     const card = (
       <article
-        className={`relative aspect-square w-full overflow-hidden rounded-[2.5rem] p-6 shadow-sm transition duration-500 ease-out group-hover:-translate-y-2 group-hover:rotate-[-1deg] sm:p-8 ${project.mainColor} ${project.textColor}`}
+        className={`relative aspect-[0.86] w-full overflow-hidden rounded-[2.5rem] p-5 shadow-sm transition duration-500 ease-out group-hover:-translate-y-2 group-hover:rotate-[-1deg] sm:aspect-square sm:p-8 ${project.mainColor} ${project.textColor}`}
       >
         <div
           className={`absolute -bottom-[87%] -left-[87%] h-[174%] w-[174%] rounded-full transition-transform duration-700 ease-out group-hover:scale-105 group-hover:-translate-y-3 ${project.mutedColor}`}
@@ -134,10 +134,10 @@ export function ProjectsCarousel() {
             <p className={`font-mono text-[10px] uppercase tracking-[0.14em] ${project.labelColor}`}>
               {project.eyebrow}
             </p>
-            <h2 className="mt-2 text-5xl font-semibold leading-none tracking-[-0.075em] sm:text-6xl">
+            <h2 className="mt-2 text-4xl font-semibold leading-none tracking-[-0.075em] sm:text-6xl">
               {project.title}
             </h2>
-            <p className="mt-5 max-w-xs text-sm leading-relaxed opacity-70 sm:text-base">
+            <p className="mt-4 max-w-xs text-[13px] leading-relaxed opacity-70 sm:mt-5 sm:text-base">
               {project.description}
             </p>
           </div>

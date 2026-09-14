@@ -5,10 +5,10 @@ export default function Home() {
     <main className="min-h-screen overflow-hidden bg-[#f4f4f4] text-[#023a4f]">
       <div className="mx-auto flex min-h-screen max-w-[1600px] flex-col px-6 py-6 sm:px-10 lg:px-16">
         <header className="flex items-center justify-between border-b border-[#023a4f]/15 pb-5">
-          <a className="text-lg font-semibold tracking-[-0.05em]" href="#projects">
+          <a className="whitespace-nowrap text-base font-semibold tracking-[-0.05em] sm:text-lg" href="#projects">
             bas arens<span className="text-[#ff6c37]">.</span>
           </a>
-          <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#023a4f]/55 sm:text-xs">
+          <p className="font-mono text-[9px] uppercase tracking-[0.12em] text-[#023a4f]/55 sm:text-xs sm:tracking-[0.14em]">
             personal playground · 2026
           </p>
         </header>
