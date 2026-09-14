@@ -4,6 +4,7 @@ import { RomeCountdown } from "@/components/rome-countdown";
 import { RomeMapSection } from "@/components/rome-map-section";
 import { RomePackingChecklist } from "@/components/rome-packing-checklist";
 import { RomePhotoAlbum } from "@/components/rome-photo-album";
+import { RomePizzaPayGame } from "@/components/rome-pizza-pay-game";
 
 const packingAllowed = [
   "1 accessoire onder de stoel: maximaal 40 × 30 × 15 cm.",
@@ -214,6 +215,7 @@ export default function Rome2026Page() {
           <p>6 — 9 november</p>
         </footer>
       </div>
+      <RomePizzaPayGame />
     </main>
   );
 }
