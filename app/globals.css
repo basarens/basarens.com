@@ -39,3 +39,21 @@ body {
 .project-strip::-webkit-scrollbar {
   display: none;
 }
+
+@keyframes project-pop {
+  from {
+    opacity: 0;
+    transform: translateY(2rem) scale(0.92) rotate(-2deg);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1) rotate(0deg);
+  }
+}
+
+@keyframes gentle-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

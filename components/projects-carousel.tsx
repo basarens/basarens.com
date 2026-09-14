@@ -60,8 +60,8 @@ export function ProjectsCarousel() {
   const dragStartX = useRef(0);
   const dragStartScrollLeft = useRef(0);
   const isDragging = useRef(false);
-  const draggedSincePointerDown = useRef(false);
   const [activeProject, setActiveProject] = useState(0);
+  const [projectInDevelopment, setProjectInDevelopment] = useState<(typeof projects)[number] | null>(null);
 
   function scrollProjects(direction: "previous" | "next") {
     const carousel = carouselRef.current;
@@ -89,8 +89,9 @@ export function ProjectsCarousel() {
     const carousel = carouselRef.current;
     if (!carousel) return;
 
+    if ((event.target as HTMLElement).closest("a, button")) return;
+
     isDragging.current = true;
-    draggedSincePointerDown.current = false;
     dragStartX.current = event.clientX;
     dragStartScrollLeft.current = carousel.scrollLeft;
     carousel.setPointerCapture(event.pointerId);
@@ -102,10 +103,6 @@ export function ProjectsCarousel() {
 
     const distance = event.clientX - dragStartX.current;
 
-    if (Math.abs(distance) > 8) {
-      draggedSincePointerDown.current = true;
-    }
-
     carousel.scrollLeft = dragStartScrollLeft.current - distance;
   }
 
@@ -116,7 +113,7 @@ export function ProjectsCarousel() {
   function renderProjectCard(project: (typeof projects)[number]) {
     const card = (
       <article
-        className={`group relative aspect-square w-full overflow-hidden rounded-[2.5rem] p-6 shadow-sm transition duration-500 ease-out hover:-translate-y-2 hover:rotate-[-1deg] sm:p-8 ${project.mainColor} ${project.textColor}`}
+        className={`relative aspect-square w-full overflow-hidden rounded-[2.5rem] p-6 shadow-sm transition duration-500 ease-out group-hover:-translate-y-2 group-hover:rotate-[-1deg] sm:p-8 ${project.mainColor} ${project.textColor}`}
       >
         <div
           className={`absolute -bottom-[87%] -left-[87%] h-[174%] w-[174%] rounded-full transition-transform duration-700 ease-out group-hover:scale-105 group-hover:-translate-y-3 ${project.mutedColor}`}
@@ -158,31 +155,31 @@ export function ProjectsCarousel() {
       </article>
     );
 
-    const wrapperClass = "w-[84vw] shrink-0 snap-center sm:w-[520px]";
+    const wrapperClass = "group relative w-[84vw] shrink-0 snap-center sm:w-[520px]";
 
     if (!project.href) {
       return (
         <div className={wrapperClass} key={project.number}>
           {card}
+          <button
+            aria-label={`Bekijk de status van ${project.title}`}
+            className="absolute inset-0 z-10 rounded-[2.5rem] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#023a4f]"
+            onClick={() => setProjectInDevelopment(project)}
+            type="button"
+          />
         </div>
       );
     }
 
     return (
-      <Link
-        aria-label={`Open ${project.title}`}
-        className={`${wrapperClass} block cursor-pointer`}
-        href={project.href}
-        key={project.number}
-        onNavigate={(event) => {
-          if (draggedSincePointerDown.current) {
-            event.preventDefault();
-            draggedSincePointerDown.current = false;
-          }
-        }}
-      >
+      <div className={wrapperClass} key={project.number}>
         {card}
-      </Link>
+        <Link
+          aria-label={`Open ${project.title}`}
+          className="absolute inset-0 z-10 rounded-[2.5rem] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#023a4f]"
+          href={project.href}
+        />
+      </div>
     );
   }
 
@@ -233,6 +230,45 @@ export function ProjectsCarousel() {
           </button>
         </div>
       </div>
+
+      {projectInDevelopment ? (
+        <div aria-labelledby="development-title" aria-modal="true" className="fixed inset-0 z-50 grid place-items-center p-5" role="dialog">
+          <button
+            aria-label="Sluit melding"
+            className="absolute inset-0 bg-[#023a4f]/55 backdrop-blur-sm"
+            onClick={() => setProjectInDevelopment(null)}
+            type="button"
+          />
+          <div className={`relative w-full max-w-md overflow-hidden rounded-[2.5rem] p-7 text-white shadow-[14px_16px_0_#023a4f] animate-[project-pop_500ms_cubic-bezier(0.16,1,0.3,1)] sm:p-9 ${projectInDevelopment.mainColor}`}>
+            <div className={`absolute -right-16 -top-16 h-52 w-52 rounded-full border-[24px] ${projectInDevelopment.mutedColor}`} />
+            <div className="absolute -bottom-24 -left-24 h-52 w-52 rounded-full bg-white/15" />
+            <div className="relative">
+              <div className="flex items-center justify-between">
+                <p className={`font-mono text-[10px] uppercase tracking-[0.16em] ${projectInDevelopment.labelColor}`}>
+                  Project {projectInDevelopment.number} · in de werkplaats
+                </p>
+                <span aria-hidden="true" className="grid h-10 w-10 place-items-center rounded-full border border-white/30 text-lg animate-[gentle-spin_8s_linear_infinite]">✦</span>
+              </div>
+              <h2 className="mt-10 text-5xl font-semibold leading-[0.9] tracking-[-0.08em]" id="development-title">
+                {projectInDevelopment.title} is nog aan het groeien.
+              </h2>
+              <p className="mt-6 max-w-sm text-base leading-relaxed text-white/80">
+                Ik ben hier achter de schermen mee bezig. Dit hoekje krijgt binnenkort zijn eerste echte vorm.
+              </p>
+              <div className="mt-8 rounded-2xl border border-white/20 bg-white/10 p-4 font-mono text-[10px] uppercase tracking-[0.14em] text-white/75">
+                Status: nieuwsgierigheid wordt gebouwd
+              </div>
+              <button
+                className="mt-8 rounded-full bg-white px-5 py-3 text-sm font-medium text-[#023a4f] shadow-[4px_5px_0_rgba(2,58,79,0.35)] transition-transform hover:-translate-y-0.5"
+                onClick={() => setProjectInDevelopment(null)}
+                type="button"
+              >
+                Terug naar de playground →
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

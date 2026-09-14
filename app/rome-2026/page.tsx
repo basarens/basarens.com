@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { RomeAgenda } from "@/components/rome-agenda";
 import { RomeCountdown } from "@/components/rome-countdown";
+import { RomeMapSection } from "@/components/rome-map-section";
 import { RomePackingChecklist } from "@/components/rome-packing-checklist";
 import { RomePhotoAlbum } from "@/components/rome-photo-album";
 
@@ -179,6 +180,21 @@ export default function Rome2026Page() {
             </h2>
           </div>
           <RomeAgenda />
+        </section>
+
+        <section className="border-t border-[#b31c38]/20 py-12 sm:py-16">
+          <div className="mb-8">
+            <p className="font-mono text-xs uppercase tracking-[0.18em] text-[#ce0f3d]">
+              Explore Rome
+            </p>
+            <h2 className="mt-2 text-3xl font-semibold tracking-[-0.055em] sm:text-4xl">
+              Alles begint bij de kaart.
+            </h2>
+            <p className="mt-3 max-w-2xl text-sm leading-relaxed text-[#b31c38]/70">
+              Onze uitvalsbasis in Prati, de necropolis en een paar plekken waar we zeker langs willen. Tik op een punt voor de locatie of open hem direct in Google Maps.
+            </p>
+          </div>
+          <RomeMapSection />
         </section>
 
         <section className="border-t border-[#b31c38]/20 py-12 sm:py-16">
