@@ -127,18 +127,8 @@ export function ProjectsCarousel() {
           style={{ backgroundColor: project.accentColor }}
         />
         <div className="relative flex h-full flex-col">
-          <div className="flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.14em] opacity-60">
+          <div className="font-mono text-[10px] uppercase tracking-[0.14em] opacity-60">
             <span>Project {project.number}</span>
-            {project.href ? (
-              <span
-                aria-hidden="true"
-                className="grid h-8 w-8 place-items-center rounded-full transition-colors group-hover:bg-white/15"
-              >
-                ↗
-              </span>
-            ) : (
-              <span>↗</span>
-            )}
           </div>
           <div className="mt-auto max-w-sm">
             <p className={`font-mono text-[10px] uppercase tracking-[0.14em] ${project.labelColor}`}>
