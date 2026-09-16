@@ -18,6 +18,13 @@ const places = [
     type: "plan",
   },
   {
+    name: "Sint-Pietersplein & basiliek",
+    detail: "Vaticaanstad · vlak bij ons verblijf",
+    position: [41.9022, 12.4539] as [number, number],
+    query: "St. Peter's Basilica, Vatican City",
+    type: "plek",
+  },
+  {
     name: "Castel Sant’Angelo",
     detail: "Aan de Tiber",
     position: [41.902563, 12.467361] as [number, number],
@@ -32,10 +39,24 @@ const places = [
     type: "plek",
   },
   {
+    name: "Piazza Navona",
+    detail: "Avondwandeling · barok Rome",
+    position: [41.8992, 12.4731] as [number, number],
+    query: "Piazza Navona, Rome, Italy",
+    type: "plek",
+  },
+  {
     name: "Trevi Fountain",
     detail: "Een muntje voor de terugreis",
     position: [41.900933, 12.483278] as [number, number],
     query: "Trevi Fountain, Rome, Italy",
+    type: "plek",
+  },
+  {
+    name: "Terrazza del Pincio",
+    detail: "Uitzicht over Rome",
+    position: [41.9127, 12.4785] as [number, number],
+    query: "Terrazza del Pincio, Rome, Italy",
     type: "plek",
   },
   {
@@ -45,16 +66,24 @@ const places = [
     query: "Colosseum, Rome, Italy",
     type: "plek",
   },
+  {
+    name: "Fiumicino Airport (FCO)",
+    detail: "Aankomst · vrijdag 11:55 · vertrek maandag 12:45",
+    position: [41.8003, 12.2389] as [number, number],
+    query: "Leonardo da Vinci–Fiumicino Airport, Rome, Italy",
+    type: "reis",
+  },
 ];
 
 const mapBounds: [[number, number], [number, number]] = [
-  [41.887, 12.448],
-  [41.91, 12.497],
+  [41.792, 12.225],
+  [41.92, 12.5],
 ];
 
 function markerColor(type: string) {
   if (type === "basis") return "#76142a";
   if (type === "plan") return "#ce0f3d";
+  if (type === "reis") return "#954258";
   return "#b31c38";
 }
 
