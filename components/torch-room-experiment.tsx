@@ -6,6 +6,12 @@ const canvasWidth = 320;
 const canvasHeight = 216;
 const tileSize = 12;
 const room = { left: 2, top: 1, width: 23, height: 16 };
+const doorTiles = new Set([
+  `${room.left + Math.floor(room.width / 2)},${room.top}`,
+  `${room.left + Math.floor(room.width / 2)},${room.top + room.height - 1}`,
+  `${room.left},${room.top + Math.floor(room.height / 2)}`,
+  `${room.left + room.width - 1},${room.top + Math.floor(room.height / 2)}`,
+]);
 
 const pillars = new Set([
   "7,5",
@@ -72,19 +78,36 @@ export function TorchRoomExperiment() {
           const centerY = y * tileSize + tileSize / 2;
           const distance = Math.hypot(centerX - player.x, centerY - player.y);
           const light = Math.max(0, 1 - distance / torchRadius);
+          const isDoor = doorTiles.has(tileKey(x, y));
           const isWall =
-            x === room.left ||
-            x === room.left + room.width - 1 ||
-            y === room.top ||
-            y === room.top + room.height - 1 ||
-            pillars.has(tileKey(x, y));
+            !isDoor &&
+            (x === room.left ||
+              x === room.left + room.width - 1 ||
+              y === room.top ||
+              y === room.top + room.height - 1 ||
+              pillars.has(tileKey(x, y)));
           if (light > 0.02) {
-            if (isWall) {
-              drawingContext.fillStyle = "#6f2631";
+            if (isDoor) {
+              drawingContext.fillStyle = "#20191d";
               drawingContext.fillRect(x * tileSize, y * tileSize, tileSize, tileSize);
+              drawingContext.fillStyle = "#78583d";
+              drawingContext.fillRect(x * tileSize + 2, y * tileSize + 1, tileSize - 4, tileSize - 2);
+              drawingContext.fillStyle = "#2c2020";
+              drawingContext.fillRect(x * tileSize + 4, y * tileSize + 3, 1, tileSize - 5);
+              drawingContext.fillRect(x * tileSize + tileSize - 5, y * tileSize + 3, 1, tileSize - 5);
+              drawingContext.fillStyle = "#f0bb50";
+              drawingContext.fillRect(x * tileSize + tileSize - 4, y * tileSize + Math.floor(tileSize / 2), 1, 1);
+            } else if (isWall) {
+              const wallBrightness = Math.round(22 + light * 46);
+              const wallVariation = (x * 11 + y * 23) % 3;
+              drawingContext.fillStyle = `rgb(${wallBrightness + wallVariation * 3}, ${wallBrightness + wallVariation * 3 + 2}, ${wallBrightness + wallVariation * 3 + 7})`;
+              drawingContext.fillRect(x * tileSize, y * tileSize, tileSize, tileSize);
+              drawingContext.fillStyle = "rgba(10, 10, 13, 0.56)";
+              drawingContext.fillRect(x * tileSize, y * tileSize + tileSize - 2, tileSize, 1);
+              drawingContext.fillRect(x * tileSize + tileSize - 2, y * tileSize, 1, tileSize);
               if (light > 0.32) {
-                drawingContext.fillStyle = "#c95d36";
-                drawingContext.fillRect(x * tileSize + 2, y * tileSize + 2, tileSize - 4, 2);
+                drawingContext.fillStyle = "rgba(194, 189, 169, 0.28)";
+                drawingContext.fillRect(x * tileSize + 2, y * tileSize + 2, tileSize - 5, 1);
               }
             } else {
               const brightness = Math.round(16 + light * 57);
