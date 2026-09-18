@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+
+{% block title %}Dialogue{% endblock %}
+
+{% block content %}
+<div id="content">
+    <!-- Host Image -->
+    <img id="host" src="{{ url_for('static', filename='icons/host/suprised.png') }}" alt="Host">
+
+    <!-- Ruby Image -->
+    <img id="ruby" src="{{ url_for('static', filename='icons/ruby.png') }}" alt="Ruby">
+
+    <!-- Story Text Container -->   
+    <div id="story-container">
+        <p id="story-text">...</p>
+    </div>
+
+    <!-- Next Button -->
+    <button id="next-button" onclick="nextMessage()">Next</button>
+
+    <!-- Background Music -->
+    <audio id="background-music" loop>
+        <source src="{{ url_for('static', filename='background-music/dialogue3.mp3') }}" type="audio/mpeg">
+        Your browser does not support the audio element.
+    </audio>
+
+    <!-- Sound Effect Element -->
+    <audio id="ruby-sound" src="{{ url_for('static', filename='sound-effects/angelic-choir.mp3') }}" preload="auto"></audio>
+
+</div>
+
+<script>
+    const storyline = [
+        "You did it!",
+        "..",
+        "..",
+        "hahahaha",
+        "WAHAHAHA",
+        "You've done very well, my dear...",
+        "As I expected.",
+        "You've proven to be exactly what I thought you were...",
+        "An easy target.",
+        "You've completed all the tasks that I've assigned you...",
+        "Just because I said I would reward you greatly.",
+        "You really think this stone was from my grandmother? Hahaha!",
+        "You've given me the Sapphire Ruby. An item so valuable that I could rule the world with it in my grasp!",
+        "And now, Gabrielle, your usefulness has ended.",
+        "But before I leave you behind...",
+        "I want to mention that I don't like any loose ends...",
+        "And unfortunately for you...",
+        "You're one of them...",
+        "So, let's play one final game, Gabrielle.",
+        "A game where only one of us will walk away..."
+    ];
+
+    const yesResponse = "Fantastic! Let's begin your journey Gabrielle. Your first task awaits you!";
+    const noResponse = "Well, tough luck Gabrielle. You really don't have a choice.";
+    let currentStep = 0;
+
+    
+    function nextMessage() {
+        const nextButton = document.getElementById("next-button");
+        const hostImage = document.getElementById("host");
+        const rubyImage = document.getElementById("ruby");
+        const rubySound = document.getElementById("ruby-sound");
+        const audio = document.getElementById("background-music");
+
+        if (currentStep === 5) {
+            // Play background music
+            audio.play().catch((error) => console.error("Failed to play audio:", error));
+
+            // Update the host avatar to a suprised host
+            hostImage.src = "{{ url_for('static', filename='icons/psycho/happy.png') }}";
+        }
+
+        
+        if (currentStep === 1) {
+            // Show the ruby and hide the host
+            hostImage.style.display = "none";
+            rubyImage.style.display = "block";
+            rubyImage.classList.add("animate-ruby-in");
+
+    
+             // Play the sound
+            rubySound.currentTime = 0; // Reset the sound if played previously
+            rubySound.play();
+
+            
+
+            // Update story text to focus on the ruby
+            document.getElementById("story-text").innerHTML =
+                "You found the Sapphire Ruby";
+        } else if (currentStep === 2) {
+            // Hide the ruby, show the host, and update story text
+            rubyImage.classList.add("animate-ruby-out");
+            setTimeout(() => {
+                rubyImage.style.display = "none";
+                rubyImage.classList.remove("animate-ruby-in", "animate-ruby-out");
+                // Update the host avatar to a happy host
+            hostImage.src = "{{ url_for('static', filename='icons/host/happy.png') }}";
+                hostImage.style.display = "block";
+
+                // Update story text
+                document.getElementById("story-text").innerHTML =
+                    "You found the Sapphire Ruby";
+            }, 2000);
+        } else if (currentStep < storyline.length) {
+            // Update the story text for the current step
+            document.getElementById("story-text").innerHTML = storyline[currentStep];
+        }
+
+        currentStep++;
+
+        if (currentStep === storyline.length) {
+            // Show choices after the last storyline message
+            document.getElementById("next-button").onclick = () => {
+                location.href = "/task5"; // Redirect to Task 1 when Next is clicked
+            }
+        }
+    }
+</script>
+
+<style>
+    #content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        height: 100%;
+    }
+
+    #host {
+        width: 150px;
+        height: auto;
+        margin-bottom: 20px;
+        transition: opacity 1s ease-in-out;
+    }
+
+    #ruby {
+        width: 150px;
+        height: auto;
+        margin-bottom: 20px;
+        display: none;
+        position: relative;
+    }
+
+    .animate-ruby-in {
+        animation: slide-in 3s forwards;
+    }
+
+    .animate-ruby-out {
+        animation: slide-out 3s forwards;
+    }
+
+    @keyframes slide-in {
+        from {
+            transform: translateY(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+
+    @keyframes slide-out {
+        from {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        to {
+            transform: translateY(100%);
+            opacity: 0;
+        }
+    }
+
+
+    #story-container {
+        font-size: 1.2rem;
+        max-width: 80%;
+        margin: 20px auto;
+    }
+
+    button {
+        margin: 10px;
+        padding: 10px 20px;
+        font-size: 1rem;
+        font-family: 'Press Start 2P', cursive;
+        color: black;
+        background-color: white;
+        border: none;
+        cursor: pointer;
+    }
+
+    button:hover {
+        background-color: gray;
+        color: white;
+    }
+
+    #choices {
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+    }
+</style>
+{% endblock %}
+
+

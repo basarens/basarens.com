@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+
+{% block title %}Dedicated To{% endblock %}
+
+{% block content %}
+<div id="flicker-container">
+    <h1 id="flicker-dedicated">Dedicated To</h1>
+</div>
+
+
+<div id="dedicated-container" style="display: none;">
+    <h1><span id="fade-in-you" style="opacity: 0;">You</span></h1>
+    <p>Made with<img id="heart-title" src="{{ url_for('static', filename='icons/effect/heal.png') }}" alt="Heart">for someone very special!</p>
+    <button onclick="location.href='/menu'">Back to Menu</button>
+</div>
+
+<script>
+    function createHeart() {
+        const heart = document.createElement("img");
+
+        heart.src = "{{ url_for('static', filename='icons/effect/heal.png') }}";
+        heart.classList.add("heart");
+        heart.style.left = Math.random() * 100 + "vw";
+        heart.style.animationDuration = Math.random() * 3 + 2 + "s";
+        heart.style.setProperty("--x", Math.random() * 2 - 1);
+        document.body.appendChild(heart);
+
+        setTimeout(() => {
+            heart.remove();
+        }, 5000);
+    }
+
+    setInterval(createHeart, 300);
+
+    document.addEventListener('click', () => {
+        const flickerContainer = document.getElementById('flicker-container');
+        const dedicatedContainer = document.getElementById('dedicated-container');
+        const fadeInYou = document.getElementById('fade-in-you');
+        const audio = document.getElementById('dedicated-music');
+
+        flickerContainer.style.display = 'none';
+        dedicatedContainer.style.display = 'flex';
+
+        fadeInYou.style.transition = 'opacity 2s ease-in';
+        fadeInYou.style.opacity = '1';
+
+        audio.play().catch(error => console.error("Audio play failed:", error));
+    });
+</script>
+
+<audio id="dedicated-music" loop>
+    <source src="{{ url_for('static', filename='background-music/dedicated.mp3') }}" type="audio/mpeg">
+    Your browser does not support the audio element.
+</audio>
+
+<style>
+    /* Flickering Title */
+    #flicker-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        background-color: black;
+    }
+
+    #flicker-dedicated {
+        font-size: 3rem;
+        font-family: 'Press Start 2P', cursive;
+        color: white;
+        animation: flicker 1s infinite alternate;
+    }
+
+    @keyframes flicker {
+        0% {
+            opacity: 1;
+        }
+        50% {
+            opacity: 0.5;
+        }
+        100% {
+            opacity: 1;
+        }
+    }
+
+    #heart-title {
+        width: 50px; /* Set the desired width */
+        height: auto; /* Maintain aspect ratio */
+        margin: 0 10px; /* Add spacing around the image if needed */
+        vertical-align: middle; /* Align with the text */
+    }
+
+    /* Dedicated Container */
+    #dedicated-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        width: 100%;
+        background-color: black;
+        color: white;
+        position: fixed;
+        top: 0;
+        left: 0;
+    }
+
+    #dedicated-container h1 {
+        font-size: 3rem;
+        font-family: 'Press Start 2P', cursive;
+    }
+
+    #dedicated-container p {
+        margin-top: 20px;
+        font-size: 1.5rem;
+        font-family: 'Press Start 2P', cursive;
+    }
+
+    #dedicated-container button {
+        margin-top: 20px;
+        padding: 10px 20px;
+        font-size: 1rem;
+        font-family: 'Press Start 2P', cursive;
+        background-color: white;
+        color: black;
+        border: none;
+        cursor: pointer;
+    }
+
+    #dedicated-container button:hover {
+        background-color: gray;
+        color: white;
+    }
+
+   /* Style for falling hearts (image version) */
+    .heart {
+        position: absolute;
+        top: -50px;
+        width: 40px; /* Adjust size as needed */
+        height: auto;
+        animation: fall linear infinite;
+    }
+
+    @keyframes fall {
+        0% {
+            transform: translateX(0) rotate(0deg);
+            top: -50px;
+        }
+        100% {
+            transform: translateX(calc(var(--x) * 1vw)) rotate(360deg);
+            top: 100vh;
+        }
+    }
+</style>
+{% endblock %}

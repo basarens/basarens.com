@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Treasure Hunt{% endblock %}</title>
+    <!-- Retro Arcade Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+
+    <style>
+        /* General body styles */
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: rgb(0, 0, 0); /* Black background */
+            color: white; /* White text */
+            font-family: 'Press Start 2P', cursive; /* Retro arcade font */
+            text-align: center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh; /* Full screen height */
+        }
+
+        /* Button styles */
+        button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 1rem;
+            font-family: 'Press Start 2P', cursive;
+            color: black;
+            background-color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: gray; /* Button hover effect */
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <!-- Page Content -->
+    {% block content %}{% endblock %}
+</body>
+</html>

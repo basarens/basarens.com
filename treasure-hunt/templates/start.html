@@ -1,0 +1,178 @@
+{% extends "base.html" %}
+
+{% block title %}For Gabrielle{% endblock %}
+
+{% block content %}
+
+<div id="overlay">
+    <h1>Tap the screen to start</h1>
+</div>
+
+<div id="start-container">
+    <!-- Ruby Image -->
+    <img id="ruby" src="{{ url_for('static', filename='icons/ruby.png') }}" alt="Ruby">
+
+    <!-- Title -->
+    <h1>Welcome to the Treasure Hunt!</h1>
+
+    <!-- Start Button -->
+    <button id="start-button" onclick="startGame()">Start</button>
+</div>
+
+<audio id="background-audio" loop>
+    <source src="{{ url_for('static', filename='background-music/start.mp3') }}" type="audio/mpeg">
+    Your browser does not support the audio element.
+</audio>
+
+<script>
+
+    // Function to handle the tap interaction
+    function startInteraction() {
+        const overlay = document.getElementById("overlay");
+        const startContainer = document.getElementById("start-container");
+        const backgroundAudio = document.getElementById("background-audio");
+
+        // Play the background music
+        backgroundAudio.play().catch((error) => {
+            console.error("Audio playback failed:", error);
+        });
+
+        // Hide the overlay and show the main content
+        overlay.style.display = "none";
+        startContainer.style.display = "flex";
+    }
+
+    // Function to start the game and animate the ruby out
+    function startGame() {                
+        
+        const ruby = document.getElementById('ruby');
+        
+        // Remove the hover animation
+        ruby.style.animation = 'none';
+        
+        // Force reflow to restart the animation
+        ruby.offsetHeight; 
+        
+        // Add the slide-out animation
+        ruby.style.animation = 'slide-out 1s forwards';
+
+        
+        // Navigate to the menu page after animation
+        setTimeout(() => {
+            window.location.href = '/menu';
+        }, 1000); // Adjust timeout to match the slide-out duration
+           
+    }
+
+    // Attach tap event to the overlay
+    document.getElementById("overlay").addEventListener("click", startInteraction);
+
+</script>
+
+<style>
+
+     /* Overlay */
+     #overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: black;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        z-index: 10;
+    }
+
+    #overlay h1 {
+        font-family: 'Press Start 2P', cursive;
+        font-size: 2rem;
+        animation: blink 2s infinite;
+    }
+
+    @keyframes blink {
+        0%, 100% {
+            opacity: 1;
+        }
+        50% {
+            opacity: 0;
+        }
+    }
+    
+    #start-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        height: 100%;
+        position: relative;
+    }
+
+    #ruby {
+        width: 150px;
+        height: auto;
+        margin-bottom: 20px;
+        animation: slide-in 2s forwards, hover 2s infinite ease-in-out;
+        position: relative;
+    }
+
+    /* Ruby Slide In Animation */
+    @keyframes slide-in {
+        from {
+            transform: translateY(-100%); /* Start above the screen */
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0); /* End at original position */
+            opacity: 1;
+        }
+    }
+    
+    /* Ruby Hover Animation */
+    @keyframes hover {
+        0%, 100% {
+            transform: translateY(0); /* Stay in place */
+        }
+        50% {
+            transform: translateY(-5px); /* Move up slightly */
+        }
+    }
+
+    
+    @keyframes slide-out {
+        from {
+            transform: translateY(0); /* Start at original position */
+            opacity: 1;
+        }
+        to {
+            transform: translateY(100%); /* Exit below the screen */
+            opacity: 0;
+        }
+    }
+
+    h1 {
+        font-family: 'Press Start 2P', cursive;
+        margin: 20px 0;
+    }
+
+    button {
+        margin-top: 20px;
+        padding: 10px 20px;
+        font-size: 1.2rem;
+        font-family: 'Press Start 2P', cursive;
+        background-color: white;
+        border: none;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+
+    button:hover {
+        background-color: gray;
+        color: white;
+    }
+</style>
+{% endblock %}

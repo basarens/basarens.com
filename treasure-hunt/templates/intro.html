@@ -1,0 +1,237 @@
+{% extends "base.html" %}
+
+{% block title %}Intro{% endblock %}
+
+{% block content %}
+<div id="content">
+    <!-- Host Image -->
+    <img id="host" src="{{ url_for('static', filename='icons/host/sleepy.png') }}" alt="Host">
+
+    <!-- Ruby Image -->
+    <img id="ruby" src="{{ url_for('static', filename='icons/ruby.png') }}" alt="Ruby">
+
+    <!-- Story Text Container -->   
+    <div id="story-container">
+        <p id="story-text">...</p>
+    </div>
+
+    <!-- Choices Container -->
+    <div id="choices" style="display: none;">
+        <button id="yes-button" onclick="chooseOption('yes')">Yes</button>
+        <button id="no-button" onclick="chooseOption('no')">No</button>
+    </div>
+
+    <!-- Next Button -->
+    <button id="next-button" onclick="nextMessage()">Say Hi</button>
+
+    <!-- Background Music -->
+    <audio id="background-music" loop>
+        <source src="{{ url_for('static', filename='background-music/intro.mp3') }}" type="audio/mpeg">
+        Your browser does not support the audio element.
+    </audio>
+
+    <!-- Sound Effect Element -->
+    <audio id="ruby-sound" src="{{ url_for('static', filename='sound-effects/twinkle.mp3') }}" preload="auto"></audio>
+
+</div>
+
+<script>
+    const storyline = [
+        "Oh.",
+        "Hi there!",
+        "You must be Gabrielle.",
+        "My name is GameMaster B, and I need your help!",
+        "Something unfortunate has happened... A very valuable item has been lost!",
+        "..",
+        "This item was passed down to me by my grandmother, and it holds great sentimental value.",
+        "..",
+        "To uncover its whereabouts, you'll need to solve puzzles, find hidden clues, and complete riddles.",
+        "If you can help me recover it, I will reward you greatly. Do we have a deal?"
+    ];
+
+    const yesResponse = "Fantastic! Let's begin your journey Gabrielle. Your first task awaits you!";
+    const noResponse = "Well, tough luck Gabrielle. You really don't have a choice.";
+    let currentStep = 0;
+
+    
+    function nextMessage() {
+        const nextButton = document.getElementById("next-button");
+        const hostImage = document.getElementById("host");
+        const rubyImage = document.getElementById("ruby");
+        const rubySound = document.getElementById("ruby-sound");
+        const audio = document.getElementById("background-music");
+
+        if (currentStep === 0) {
+            // Update the button text from "Say Hi" to "Next" after the first click
+            nextButton.innerText = "Next";
+            // Play background music
+            audio.play().catch((error) => console.error("Failed to play audio:", error));
+
+            // Update the host avatar to a suprised host
+            hostImage.src = "{{ url_for('static', filename='icons/host/suprised.png') }}";
+        }
+
+        if (currentStep === 1) {
+            // Update the host avatar to happy host
+            hostImage.src = "{{ url_for('static', filename='icons/host/happy.png') }}";
+        }
+
+        if (currentStep === 4) {
+            // Update the host avatar to sad host
+            hostImage.src = "{{ url_for('static', filename='icons/host/sad.png') }}";
+        }
+        
+        if (currentStep === 5) {
+            // Show the ruby and hide the host
+            hostImage.style.display = "none";
+            rubyImage.style.display = "block";
+            rubyImage.classList.add("animate-ruby-in");
+
+             // Play the sound
+            rubySound.currentTime = 0; // Reset the sound if played previously
+            rubySound.play();
+
+            // Update story text to focus on the ruby
+            document.getElementById("story-text").innerHTML =
+                "Something unfortunate has happened... A very valuable item has been lost!";
+        } else if (currentStep === 7) {
+            // Hide the ruby, show the host, and update story text
+            rubyImage.classList.add("animate-ruby-out");
+            setTimeout(() => {
+                rubyImage.style.display = "none";
+                rubyImage.classList.remove("animate-ruby-in", "animate-ruby-out");
+                // Update the host avatar to a happy host
+            hostImage.src = "{{ url_for('static', filename='icons/host/host.png') }}";
+                hostImage.style.display = "block";
+
+                // Update story text
+                document.getElementById("story-text").innerHTML =
+                    "I believe the item could be hidden in one of several locations in this house, but I can’t search them myself.";
+            }, 2000);
+        } else if (currentStep < storyline.length) {
+            // Update the story text for the current step
+            document.getElementById("story-text").innerHTML = storyline[currentStep];
+        }
+
+        currentStep++;
+
+        if (currentStep === storyline.length) {
+            // Show choices after the last storyline message
+            nextButton.style.display = "none";
+            document.getElementById("choices").style.display = "block";
+        }
+    }
+    function chooseOption(choice) {
+        const hostImage = document.getElementById("host");
+
+        if (choice === "yes") {
+            hostImage.src = "{{ url_for('static', filename='icons/host/happy.png') }}";
+            document.getElementById("story-text").innerHTML = yesResponse;
+            // Redirect to Task 1 when Next is clicked
+            document.getElementById("next-button").onclick = () => {
+            location.href = "/task1"; // Redirect to Task 1 when Next is clicked
+            };
+
+        document.getElementById("next-button").style.display = "block";
+        } else {
+            hostImage.src = "{{ url_for('static', filename='icons/host/angry.png') }}";
+            document.getElementById("story-text").innerHTML = noResponse;
+            document.getElementById("next-button").style.display = "block";
+            // Redirect to Task 1 when Next is clicked
+            document.getElementById("next-button").onclick = () => {
+            location.href = "/task1"; // Redirect to Task 1 when Next is clicked
+            };
+        }
+
+        // Hide the choices after the player has chosen
+        document.getElementById("choices").style.display = "none";
+    }
+</script>
+
+<style>
+    #content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        height: 100%;
+    }
+
+    #host {
+        width: 150px;
+        height: auto;
+        margin-bottom: 20px;
+        transition: opacity 1s ease-in-out;
+    }
+
+    #ruby {
+        width: 150px;
+        height: auto;
+        margin-bottom: 20px;
+        display: none;
+        position: relative;
+    }
+  
+
+    .animate-ruby-in {
+        animation: slide-in 3s forwards;
+    }
+    
+    .animate-ruby-out {
+        animation: slide-out 3s forwards;
+    }
+
+    @keyframes slide-in {
+        from {
+            transform: translateY(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+
+
+
+    @keyframes slide-out {
+        from {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        to {
+            transform: translateY(100%);
+            opacity: 0;
+        }
+    }
+
+    #story-container {
+        font-size: 1.2rem;
+        max-width: 80%;
+        margin: 20px auto;
+    }
+
+    button {
+        margin: 10px;
+        padding: 10px 20px;
+        font-size: 1rem;
+        font-family: 'Press Start 2P', cursive;
+        color: black;
+        background-color: white;
+        border: none;
+        cursor: pointer;
+    }
+
+    button:hover {
+        background-color: gray;
+        color: white;
+    }
+
+    #choices {
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+    }
+</style>
+{% endblock %}

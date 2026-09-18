@@ -3,7 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "predev": "node scripts/export-treasure-hunt.mjs",
     "dev": "next dev",
+    "prebuild": "node scripts/export-treasure-hunt.mjs",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"

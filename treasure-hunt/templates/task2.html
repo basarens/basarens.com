@@ -1,0 +1,303 @@
+{% extends "base.html" %}
+
+{% block title %}A Voice to Guide You{% endblock %}
+
+{% block content %}
+
+<!-- Flickering Overlay -->
+<div id="overlay">
+    <h1 id="flicker-title">A Voice to Guide You</h1>
+</div>
+
+<div id="task-container">
+    <!-- Visual Element -->
+    <img id="visual" src="{{ url_for('static', filename='icons/task/google.png') }}" alt="Google Mini">
+
+    <!-- Task Title -->
+    <h1 id="task-title">{% block task_title %}A Voice to Guide You{% endblock %}</h1>
+
+    <!-- Task Description -->
+    <div id="riddle-container" style="display: none;">
+        <p id="riddle-line-1" style="display: none;">I am small, a flattened sphere,</p>
+        <p id="riddle-line-2" style="display: none;">To wake me, say <span style="color: #2b00ff; font-weight: bold;">"Hey"</span> and call my name so clear.</p>
+        <p id="riddle-line-3" style="display: none;">Follow with yours, spoken with pride,</p>
+        <p id="riddle-line-4" style="display: none;">And I’ll reveal the clue to help you guide.</p>
+        
+        <!-- Hint Area -->
+        <div id="hint-area"></div>
+
+        <!-- Hint Button -->
+        <div id="button-container">
+            <button id="hint-button" onclick="showHint()">Hint</button>
+        </div>
+
+        <!-- Solve Button -->
+        <button id="solve-button" onclick="solveRiddle()">I have solved it</button>
+    </div>
+
+     <!-- Next Task Button -->
+     <button class=task-button id="next-task-button" style="display: none;" onclick="location.href='/task3'">Next</button>
+    
+
+</div>
+
+<!-- Background Music -->
+<audio id="background-music" src="{{ url_for('static', filename='background-music/task2.mp3') }}" preload="auto" loop></audio>
+
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const overlay = document.getElementById("overlay");
+        const taskContainer = document.getElementById("task-container");
+        const backgroundMusic = document.getElementById("background-music");
+
+        overlay.addEventListener("click", () => {
+            overlay.style.display = "none"; // Hide the overlay
+            taskContainer.style.display = "flex"; // Show the task container
+            
+             // Play background music
+             backgroundMusic.play();
+              
+        
+        // Hide task title and show riddle container
+        setTimeout(() => {
+            document.getElementById("task-title").style.display = "none";
+            document.getElementById("riddle-container").style.display = "block";
+
+            // Display the riddle lines one by one
+            showRiddleLine("riddle-line-1", 3200);
+            showRiddleLine("riddle-line-2", 6000);
+            showRiddleLine("riddle-line-3", 8600);
+            showRiddleLine("riddle-line-4", 11000, () => {
+                document.getElementById("button-container").style.display = "block"; // Show the button container
+
+                // Delay the "Hint" button
+                setTimeout(() => {
+                    document.getElementById("hint-button").style.display = "block";
+                }, 10000); // 1-second delay for the hint button
+
+                // Delay the "I have solved it" button
+                setTimeout(() => {
+                    document.getElementById("solve-button").style.display = "block";
+                }, 10000); // 20 seconds delay for the solve button
+            });
+            }, 3000);
+        });
+    });
+
+
+    function showRiddleLine(id, delay, callback) {
+        setTimeout(() => {
+            const line = document.getElementById(id);
+            if (line) line.style.display = "block";
+            if (callback) callback();
+        }, delay);
+    }
+
+    function solveRiddle() {
+        document.getElementById("button-container").style.display = "none";
+        const visual = document.getElementById("visual");
+        visual.src = "{{ url_for('static', filename='icons/host/happy.png') }}";
+        visual.alt = "Happy Host";
+        visual.className = "host-image";
+
+        const riddleContainer = document.getElementById("riddle-container");
+        riddleContainer.innerHTML = `
+            <p style='font-size: 1.5rem;'>Nice work! You know where to go next. Right?</p>
+            <div id="success-buttons">
+                <button class="task-button" id="next-task-button" onclick="location.href='/task3'">Next</button>
+                <button class="task-button" id="back-to-riddle" onclick="backToRiddle()">Back</button>
+            </div>
+        `;
+        riddleContainer.style.display = "block";
+    }
+
+    function backToRiddle() {
+        const riddleContainer = document.getElementById("riddle-container");
+        riddleContainer.innerHTML = `
+            <p id="riddle-line-1">I am small, a flattened sphere,</p>
+            <p id="riddle-line-2">To wake me, say <span style="color: #2b00ff; font-weight: bold;">"Hey"</span> and call my name so clear.</p>
+            <p id="riddle-line-3">Follow with yours, spoken with pride,</p>
+            <p id="riddle-line-4">And I’ll reveal the clue to help you guide.</p>
+            <div id="button-container">
+                <button id="hint-button" onclick="showHint()">Hint</button>
+            </div>
+            <button id="solve-button" onclick="solveRiddle()">I have solved it</button>
+        `;
+
+        // Ensure the button container and solve button are visible
+        document.getElementById("button-container").style.display = "flex";
+        document.getElementById("solve-button").style.display = "block";
+
+        // Hide the "Next Task" button if it's still visible
+        const nextTaskButton = document.getElementById("next-task-button");
+        if (nextTaskButton) {
+            nextTaskButton.style.display = "none";
+        }
+    }
+
+    function showHint() {
+        // Check if the hint is already displayed
+        if (!document.getElementById("hint")) {
+            const hint = document.createElement("p");
+            hint.id = "hint"; // Add an ID to the hint element
+            hint.style.fontSize = "1.2rem";
+            hint.style.marginTop = "20px";
+
+            // Add the text before "Google"
+            hint.innerHTML = "My creator is ";
+
+            // Create and style each letter of "Google"
+            const googleColors = ["blue", "red", "yellow", "blue", "green", "red"];
+            const googleText = "Google";
+            const googleSpan = document.createElement("span");
+
+            for (let i = 0; i < googleText.length; i++) {
+                const letter = document.createElement("span");
+                letter.textContent = googleText[i];
+                letter.style.color = googleColors[i];
+                googleSpan.appendChild(letter);
+            }
+
+            // Add the styled "Google" word and the rest of the hint text
+            hint.appendChild(googleSpan);
+            hint.innerHTML += " and I wear clothes in size Mini.";
+
+            // Append the hint to the riddle container
+            document.getElementById("riddle-container").appendChild(hint);
+        }
+    }
+
+</script>
+
+<style>
+
+    /* Flickering Overlay */
+    #overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: black;
+        z-index: 10;
+        cursor: pointer;
+    }
+
+    #flicker-title {
+        font-family: 'Press Start 2P', cursive;
+        font-size: 2rem;
+        color: white;
+        animation: flicker 1.5s infinite;
+    }
+
+    @keyframes flicker {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+    }
+    #task-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        height: 100%;
+    }
+
+    h1, p {
+        font-family: 'Press Start 2P', cursive;
+    }
+
+    button {
+        margin: 10px;
+        padding: 10px 20px;
+        font-size: 1rem;
+        font-family: 'Press Start 2P', cursive;
+        color: black;
+        background-color: white;
+        border: none;
+        cursor: pointer;
+    }
+
+    button:hover {
+        background-color: gray;
+        color: white;
+    }
+
+    .host-image {
+        width: 150px;
+        height: auto;
+    }
+
+    #visual {
+        font-size: 4rem;
+        margin-bottom: 20px;
+        text-align: center;
+        width: 120px;
+        height: auto;
+    }
+
+   .task-button {
+        margin: 10px;
+        padding: 10px 20px;
+        font-size: 1rem;
+        font-family: 'Press Start 2P', cursive;
+        color: black;
+        background-color: white;
+        border: none;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+
+    .task-button:hover {
+        background-color: gray;
+        color: white;
+    }
+
+    #success-buttons {
+        display: flex;
+        justify-content: center;
+        gap: 20px; /* Space between buttons */
+        margin-top: 20px;
+    }
+
+    #button-container {
+        display: none;
+        flex-direction: column; /* Stack buttons vertically */
+        align-items: center; /* Center align buttons */
+        justify-content: center; /* Center align vertically if necessary */
+        gap: 20px; /* Space between buttons */
+        width: 100%; /* Ensure it spans the full width */
+        margin-top: 20px; /* Add spacing from the riddle */
+    }
+
+    #hint-button {
+        position: absolute; /* Position the hint button absolutely */
+        top: 20px; /* Place it near the top */
+        right: 20px; /* Place it near the right edge */
+    }
+
+    #solve-button {
+        display: none;
+        margin: 20px auto; /* Center horizontally and add space from other elements */
+        padding: 10px 20px;
+        font-size: 1rem;
+        font-family: 'Press Start 2P', cursive;
+        color: black;
+        background-color: white;
+        border: none;
+        cursor: pointer;
+        text-align: center;
+        position: relative; /* Remains relative to the riddle container */
+        z-index: 1;
+    }
+
+    #solve-button:hover {
+        background-color: gray;
+        color: white;
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,351 @@
+{% extends "base.html" %}
+
+{% block title %}Can You See It?{% endblock %}
+
+{% block content %}
+<!-- Flickering Overlay -->
+<div id="overlay">
+    <h1 id="overlay-text">Can You See It?</h1>
+</div>
+
+
+
+<div id="task-container" style="display: none; flex-direction: column; align-items: center;">
+    <!-- Task Title -->
+    <h1 id="task-title" style="text-align: center; margin-bottom: 20px;">{% block task_title %}Can You See It?{% endblock %}</h1>
+
+    <!-- Hints Display -->
+    <div id="hints-container"></div>
+
+    <!-- Puzzle Container -->
+    <div id="puzzle-container"></div>
+    
+    <!-- Song Info (Initially Hidden) -->
+    <p id="song-info" style="display: none; font-family: 'Press Start 2P', cursive; font-size: 1rem; color: white; text-align: center;"><br>
+        Now Playing: "The Look" by Metronomy
+    </p>
+
+    <!-- Buttons -->
+    <button id="hint-button" style="margin-top: 20px;" onclick="showHint()">Hint</button>
+    <button id="shuffle-button" style="margin-top: 20px;" onclick="shuffleTiles()">Shuffle</button>
+    <button id="next-button" style="display: none;" onclick="location.href='/dialogue3'">Next</button>
+</div>
+
+ <!-- Background Music -->
+ <audio id="background-music" loop>
+    <source src="{{ url_for('static', filename='background-music/the-look.mp3') }}" type="audio/mpeg">
+    Your browser does not support the audio element.
+</audio>
+
+<audio id="the-look-music">
+    <source src="{{ url_for('static', filename='background-music/the-look.mp3') }}" type="audio/mpeg">
+    Your browser does not support the audio element.
+</audio>
+
+<script>
+    const imageSrc = "{{ url_for('static', filename='background/image.png') }}"; // Path to the puzzle image
+    const imageSrc2 = "{{ url_for('static', filename='background/image-complete.png') }}";
+    const gridSize = 3;
+    const puzzleContainer = document.getElementById('puzzle-container');
+    const overlay = document.getElementById('overlay');
+    const overlayText = document.getElementById('overlay-text');
+    const taskContainer = document.getElementById('task-container');
+    const backgroundMusic = document.getElementById('background-music');
+    const theLookMusic = document.getElementById('the-look-music');
+    const hintButton = document.getElementById('hint-button');
+    const shuffleButton = document.getElementById('shuffle-button');
+    const hintsContainer = document.getElementById('hints-container');
+
+    let tiles = [];
+    let hintIndex = 0;
+
+
+    // List of hints (step-by-step guide for solving the puzzle)
+    const hints = [
+        '1. Place tile <span style="color: red;">1</span> in the top-left spot.',
+        '2. Place tile <span style="color: red;">3</span> in the top-middle spot and tile <span style="color: red;">2</span> right below.',
+        '3. Now complete the top row by making space in the top-right and placing tile <span style="color: red;">3</span> there.',
+        '4. Move tile <span style="color: red;">7</span> and <span style="color: red;">4</span> to the middle-left and middle spot respectively.',
+        '5. Now complete the left column by making space in the bottom-left and place tile <span style="color: red;">7</span> there.',
+        '6. Move around the remaining tiles to complete the puzzle.',
+        '7. If the puzzle cannot be solved, you need to shuffle and try again.'
+    ];
+
+    // Ensure the background music loops only the first 10 seconds
+    backgroundMusic.addEventListener('timeupdate', () => {
+        if (backgroundMusic.currentTime > 11.05) {
+            backgroundMusic.currentTime = 0; // Reset to the beginning
+            backgroundMusic.play(); // Loop
+        }
+    });
+
+    function createPuzzle() {
+        tiles = [];
+        puzzleContainer.innerHTML = '';
+        puzzleContainer.style.display = "grid";
+        puzzleContainer.style.width = "320px";
+        puzzleContainer.style.height = "320px";
+        puzzleContainer.style.gridTemplateColumns = `repeat(${gridSize}, 1fr)`;
+        puzzleContainer.style.gap = "2px";
+
+        for (let row = 0; row < gridSize; row++) {
+            for (let col = 0; col < gridSize; col++) {
+                const tile = document.createElement('div');
+                tile.classList.add('tile');
+                tile.style.backgroundImage = `url(${imageSrc})`;
+                tile.style.backgroundSize = "320px 320px";
+                tile.style.backgroundPosition = `${-col * 80}px ${-row * 80}px`;
+                tile.dataset.position = `${row}-${col}`;
+                tile.dataset.number = row * gridSize + col + 1; // Assign number to tile
+                tile.addEventListener('click', () => moveTile(tile));
+                tiles.push(tile);
+                puzzleContainer.appendChild(tile);
+            }
+        }
+        tiles[tiles.length - 1].style.backgroundImage = 'none'; // Last tile empty
+        shuffleTiles();
+        
+    }
+
+    function shuffleTiles() {
+        let isValidShuffle = false;
+
+        while (!isValidShuffle) {
+            for (let i = tiles.length - 1; i > 0; i--) {
+                let j = Math.floor(Math.random() * (i + 1));
+                [tiles[i].dataset.position, tiles[j].dataset.position] = [tiles[j].dataset.position, tiles[i].dataset.position];
+            }
+            
+            let shuffledPuzzle = Array(gridSize).fill(null).map(() => Array(gridSize).fill(null));
+            tiles.forEach(tile => {
+                let [row, col] = tile.dataset.position.split('-').map(Number);
+                let tileNumber = tile.style.backgroundImage === 'none' ? gridSize * gridSize : parseInt(tile.dataset.number);
+                shuffledPuzzle[row][col] = tileNumber;
+            });
+
+            isValidShuffle = isSolvable(shuffledPuzzle);
+        }
+
+        updateTilePositions();
+    }
+
+    function getInvCount(arr) {
+        let inv_count = 0;
+        const emptyValue = gridSize * gridSize; // Use the highest number for the empty tile
+        
+        for (let i = 0; i < arr.length; i++) {
+            for (let j = i + 1; j < arr.length; j++) {
+                if (arr[i] !== emptyValue && arr[j] !== emptyValue && arr[i] > arr[j]) {
+                    inv_count++;
+                }
+            }
+        }
+        return inv_count;
+    }
+
+    function isSolvable(puzzle) {
+        let flatPuzzle = puzzle.flat();
+        let invCount = getInvCount(flatPuzzle);
+
+        // Solvable if inversion count is even
+        return invCount % 2 === 0;
+    }
+
+    function moveTile(tile) {
+        const emptyTile = tiles.find(t => t.style.backgroundImage === 'none');
+        const [tileRow, tileCol] = tile.dataset.position.split('-').map(Number);
+        const [emptyRow, emptyCol] = emptyTile.dataset.position.split('-').map(Number);
+        
+        if ((Math.abs(tileRow - emptyRow) === 1 && tileCol === emptyCol) || 
+            (Math.abs(tileCol - emptyCol) === 1 && tileRow === emptyRow)) {
+            [tile.dataset.position, emptyTile.dataset.position] = [emptyTile.dataset.position, tile.dataset.position];
+            updateTilePositions();
+            checkCompletion();
+        }
+    }
+
+    function updateTilePositions() {
+        tiles.forEach(tile => {
+            const [row, col] = tile.dataset.position.split('-').map(Number);
+            tile.style.gridColumn = col + 1;
+            tile.style.gridRow = row + 1;
+        });
+    }
+
+    function checkCompletion() {
+        let isSolved = tiles.every((tile, index) => tile.dataset.position === `${Math.floor(index / gridSize)}-${index % gridSize}`);
+        if (isSolved) {
+            // Stop the looping behavior of background music
+            backgroundMusic.removeEventListener('timeupdate', () => {});
+            backgroundMusic.loop = false;
+
+            // Allow the music to continue from the current position and play the full song
+            theLookMusic.currentTime = backgroundMusic.currentTime; // Start where background left off
+            theLookMusic.play();
+            backgroundMusic.pause();
+            theLookMusic.volume = 1.0; // Set the volume to 100%
+
+            // Fade in the complete image
+            fadeInCompleteImage();
+        }
+    }
+
+    function fadeInCompleteImage() {
+        // Remove the grid
+        puzzleContainer.innerHTML = '';
+
+        // Remove hint button
+        hintButton.style.display = 'none';
+
+        // Remove shuffle button
+        shuffleButton.style.display = 'none';
+
+        // Create a new element for the complete image
+        const completeImage = document.createElement('div');
+        completeImage.style.width = '320px';
+        completeImage.style.height = '320px';
+        completeImage.style.backgroundImage = `url(${imageSrc2})`; // Use the complete image
+        completeImage.style.backgroundSize = 'cover';
+        completeImage.style.opacity = '0'; // Start with opacity 0
+        completeImage.style.transition = 'opacity 3s'; // Animate opacity over 2 seconds
+
+        // Add the complete image to the container
+        puzzleContainer.appendChild(completeImage);
+
+        // Trigger the fade-in effect
+        setTimeout(() => {
+            completeImage.style.opacity = '1';
+        }, 0); // Allow the browser to process the transition
+
+        const nextButton = document.getElementById('next-button');
+
+        // Display the next button after the the look music is on 15 seconds
+        showNextButtonWhenMusicPlays();
+        showArtist();
+    }
+
+    function showNextButtonWhenMusicPlays() {
+        const nextButton = document.getElementById("next-button");
+        const theLookMusic = document.getElementById("the-look-music");
+        const songInfo = document.getElementById("song-info"); // Get song info element
+
+        // Check every 500ms (0.5 seconds) if the music has reached 15s
+        const checkInterval = setInterval(() => {
+            if (theLookMusic.currentTime >= 19.5) {
+                nextButton.style.display = "block"; // Show the next button
+                songInfo.style.display = "block"; // Show song info
+                clearInterval(checkInterval); // Stop checking once it's shown
+            }
+        }, 500); // Check every 500ms
+    }
+
+    // Show text that displays the artist and name of the song
+    function showArtist() {
+        const artistName = document.getElementById("artist-name");
+        artistName.textContent = "Metronomy: The Look";
+    }
+
+    function showHint() {
+
+        tiles.forEach(tile => {
+            if (tile.dataset.number) {
+                const numberLabel = document.createElement('span');
+                numberLabel.textContent = tile.dataset.number;
+                numberLabel.style.position = 'absolute';
+                numberLabel.style.bottom = '5px';
+                numberLabel.style.left = '5px';
+                numberLabel.style.fontSize = '12px';
+                numberLabel.style.color = 'red';
+                tile.style.position = 'relative';
+                tile.appendChild(numberLabel);
+            }
+        });
+        
+        if (hintIndex < hints.length) {
+            const hintElement = document.createElement('p');
+            hintElement.innerHTML = hints[hintIndex]; // Use innerHTML to render styled text
+            hintElement.classList.add('hint-text');
+            hintsContainer.appendChild(hintElement);
+            hintIndex++; 
+        } else {
+            hintButton.disabled = true; // Disable button after all hints are shown
+        }
+
+    }
+
+    overlayText.addEventListener("click", () => {
+    overlay.style.display = "none"; // Hide the overlay
+    taskContainer.style.display = "flex"; // Show the task container
+
+    // Let background music play after 10 seconds
+    setTimeout(() => {
+            backgroundMusic.play();
+            backgroundMusic.volume = 0;
+            let fadeInterval = setInterval(() => {
+                if (backgroundMusic.volume < 0.2) {
+                    backgroundMusic.volume = Math.min(backgroundMusic.volume + 0.05, 0.2);
+                } else {
+                    clearInterval(fadeInterval);
+                }
+            }, 200);
+        }, 10000);
+
+    createPuzzle();
+});
+
+</script>
+
+<style>
+    #puzzle-container {
+        border: 2px solid white;
+    }
+    .tile {
+        width: 100%;
+        height: 100%;
+        cursor: pointer;
+    }
+
+    #hints-container {
+        margin-bottom: 15px;
+        text-align: center;
+        color: white;
+        font-family: 'Press Start 2P', cursive;
+    }
+
+    .hint-text {
+        font-size: 1rem;
+        margin: 5px 0;
+    }
+
+    /* Flickering Overlay */
+    #overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: black;
+        z-index: 10;
+    }
+
+    #overlay h1 {
+        font-family: 'Press Start 2P', cursive;
+        font-size: 2rem;
+        animation: blink 2s infinite;
+        cursor: pointer;
+    }
+
+    @keyframes blink {
+        0%, 100% {
+            opacity: 1;
+        }
+        50% {
+            opacity: 0;
+        }
+    }
+</style>
+{% endblock %}
+

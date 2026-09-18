@@ -1,0 +1,236 @@
+{% extends "base.html" %}
+
+{% block title %}Victory{% endblock %}
+
+{% block content %}
+<div id="dialogue-container">
+    <!-- Gabrielle's Avatar -->
+    <img id="gaby" src="{{ url_for('static', filename='icons/gaby/happy.png') }}" alt="Gabrielle">
+
+    <!-- Host's Avatar -->
+    <img id="host" src="{{ url_for('static', filename='icons/host/suprised.png') }}" alt="Host">
+
+    <!-- Dialogue Box -->
+    <div id="dialogue-box">
+        <p id="dialogue-text">...</p>
+    </div>
+
+    <!-- Next Button -->
+    <button id="next-button" onclick="nextDialogue()">Next</button>
+
+    <!-- Ruby -->
+    <img id="ruby" src="{{ url_for('static', filename='icons/pouch.png') }}" alt="Ruby">
+</div>
+
+<audio id="background-music" loop>
+    <source src="{{ url_for('static', filename='background-music/dialogue4.mp3') }}" type="audio/mpeg">
+    Your browser does not support the audio element.
+</audio>
+
+<audio id="throw-sound">
+    <source src="{{ url_for('static', filename='sound-effects/throw-sound.mp3') }}" type="audio/mpeg">
+    Your browser does not support the audio element.
+</audio>
+
+<script>
+    const dialogues = [
+        "I can't believe it... You've beaten me.",
+        "All this time, I believed the Ruby would make me unstoppable..the most powerful being the world has ever seen.",
+        "But I guess... its power isn't for those who crave control...",
+        "Or those who seek to bend the world to their will.",
+        "It’s meant for someone who truly cares about others... someone who gives more than they take.",
+        "Someone like you, Gabrielle.",
+        "Here, take it. The Ruby has chosen you.",
+        "Use its power wisely. For it can bring hope... or cause unimaginable ruin.",
+        "As for me... my selfishness blinded me to what truly matters. I was never worthy of this power.",
+        "Perhaps... in another life, I can learn to be more like you.",
+        "Farewell, Gabrielle. The world is in better hands with you.",
+        ""
+];
+
+    let dialogueStep = 0;
+
+    function nextDialogue() {
+        const dialogueText = document.getElementById("dialogue-text");
+        const host = document.getElementById("host");
+        const ruby = document.getElementById("ruby");
+        const throwSound = document.getElementById("throw-sound");
+        const gaby = document.getElementById("gaby");
+        const nextButton = document.getElementById("next-button");
+        const audio = document.getElementById("background-music");
+
+        if (dialogueStep < dialogues.length) {
+            const text = dialogues[dialogueStep];
+            dialogueText.innerText = text;
+
+                // Special actions for specific dialogues
+                if (dialogueStep === 0) {
+                    // Play background music
+                    audio.play().catch((error) => console.error("Failed to play audio:", error));
+                }
+
+                if (dialogueStep === 5) {
+                    // Host cries
+                    host.src = "{{ url_for('static', filename='icons/host/cry.png') }}";
+                }   
+
+                if (dialogueStep === 6) {
+                     // Host starts throwing the ruby
+                    ruby.style.display = "block";
+
+                    // Calculate positions
+                    const hostRect = host.getBoundingClientRect();
+                    const gabyRect = gaby.getBoundingClientRect();
+
+                    // Set ruby's initial position
+                    ruby.style.left = `${hostRect.left + hostRect.width / 2}px`;
+                    ruby.style.top = `${hostRect.top + hostRect.height / 2}px`;
+
+                    // Add animation
+                    ruby.style.animation = "throw-ruby 1.5s forwards";
+                    throwSound.play();
+
+                    // Update CSS variables for the animation dynamically
+                    document.documentElement.style.setProperty("--ruby-target-x", `${gabyRect.left - hostRect.left}px`);
+                    document.documentElement.style.setProperty("--ruby-target-y", `${gabyRect.top - hostRect.top}px`);
+                    
+                } else if (dialogueStep === 9) {
+                    // Host turns into an angel
+                    host.src = "{{ url_for('static', filename='icons/angel/angel.png') }}";
+                    host.classList.add("hovering");
+
+                } else if (dialogueStep === 10) {
+                    // Host smiles
+                    host.src = "{{ url_for('static', filename='icons/angel/glad.png') }}";
+
+                } else if (dialogueStep === 11) {
+                    // Host rises to heaven
+                    host.classList.remove("hovering"); // Stop hovering
+                    host.classList.add("rise-to-heaven");
+                    // Update the button text from "Say Hi" to "Next" after the first click
+                    nextButton.innerText = "End Game";
+                }
+
+            dialogueStep++;
+            } else {
+                location.href = "/credits"; // Redirect to the credits or next section
+                }
+            }
+    
+</script>
+
+<style>
+    /* Main Container */
+    #dialogue-container {
+        display: flex;
+        flex-direction: column; /* Stack text and button vertically */
+        align-items: center;
+        justify-content: flex-start;
+        height: 100vh;
+        width: 100%;
+        position: relative; /* For absolute positioning of avatars */
+    }
+
+    /* Gabrielle's Avatar (Left) */
+    #gaby {
+        position: absolute;
+        top: 300px; /* Adjust height as needed */
+        left: 300px; /* Adjust distance from the left edge */
+        width: 150px;
+        height: auto;
+    }
+
+    /* Host's Avatar (Right) */
+    #host {
+        position: absolute;
+        top: 300px; /* Same height as Gabrielle */
+        right: 300px; /* Adjust distance from the right edge */
+        width: 150px;
+        height: auto;
+    }
+
+    /* Dialogue Box */
+    #dialogue-box {
+        margin-top: 450px; /* Space below avatars */
+        font-size: 1.2rem;
+        max-width: 60%; /* Adjust width as needed */
+        text-align: center;
+        font-family: 'Press Start 2P', cursive;
+        background-color: rgba(0, 0, 0, 0.6); /* Optional background for better visibility */
+        color: white;
+        padding: 20px;
+        border-radius: 10px;
+    }
+
+    /* Next Button */
+    #next-button {
+        margin-top: 20px; /* Space below the dialogue box */
+        padding: 10px 20px;
+        font-size: 1rem;
+        font-family: 'Press Start 2P', cursive;
+        color: black;
+        background-color: white;
+        border: none;
+        cursor: pointer;
+    }
+
+    #next-button:hover {
+        background-color: gray;
+        color: white;
+    }
+
+    #ruby {
+        position: absolute;
+        width: 50px;
+        height: auto;
+        display: none;
+        z-index: 1500;
+    }
+
+    /* Ruby Throw Animation */
+    @keyframes throw-ruby {
+        0% {
+            transform: translate(0, 0);
+        }
+        50% {
+            transform: translate(calc(var(--ruby-target-x) / 2), calc(var(--ruby-target-y) / 2 - 100px));
+        }
+        100% {
+            transform: translate(var(--ruby-target-x), var(--ruby-target-y));
+        }
+    }
+
+    /* Angel Animation */
+    .rise-to-heaven {
+        animation: rise-to-heaven 6s forwards;
+    }
+
+     /* Hovering Effect */
+     .hovering {
+        animation: hover-animation 3s ease-in-out infinite;
+    }
+
+    @keyframes hover-animation {
+        0% {
+            transform: translateY(10px);
+        }
+        50% {
+            transform: translateY(-20px);
+        }
+        100% {
+            transform: translateY(10px);
+        }
+    }
+
+    @keyframes rise-to-heaven {
+        0% {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        100% {
+            transform: translateY(-200px);
+            opacity: 0;
+        }
+    }
+</style>
+{% endblock %}

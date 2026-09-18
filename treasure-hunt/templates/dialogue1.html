@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+
+{% block title %}Dialogue{% endblock %}
+
+{% block content %}
+<div id="dialogue-container">
+    <img id="happy-host" src="{{ url_for('static', filename='icons/host/happy.png') }}" alt="Host">
+    <div id="dialogue-box">
+        <p id="dialogue-text">...</p>
+    </div>
+    <button id="next-button" onclick="nextDialogue()">Next</button>
+</div>
+
+<!-- Background Music -->
+<audio id="background-music" loop>
+    <source src="{{ url_for('static', filename='background-music/dialogue.mp3') }}" type="audio/mpeg">
+    Your browser does not support the audio element.
+</audio>
+
+<script>
+    const dialogues = [
+        "Great job on your first riddle, Gabrielle!",
+        "You probably just thought: Roof. House. Up... and there you go.. The Attic! You're so smart!",
+        "We're getting closer to finding the Ruby. I can feel it!",
+        "Ready for the next challenge? Let's go!"
+    ];
+    let dialogueStep = 0;
+    let musicStarted = false; // Flag to ensure music starts only once
+
+    function nextDialogue() {
+        const backgroundMusic = document.getElementById("background-music");
+
+        // Start the background music after the first click
+        if (!musicStarted) {
+            backgroundMusic.play();
+            musicStarted = true;
+        }
+
+        if (dialogueStep < dialogues.length) {
+            document.getElementById("dialogue-text").innerText = dialogues[dialogueStep];
+            dialogueStep++;
+        } else {
+            location.href = "/task2"; // Redirect to the next task
+        }
+    }
+</script>
+
+<style>
+    #dialogue-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        height: 100%;
+    }
+
+    #happy-host {
+        width: 150px;
+        height: auto;
+        margin-bottom: 20px;
+    }
+
+    #dialogue-box {
+        font-size: 1.2rem;
+        max-width: 80%;
+        margin: 20px auto;
+        font-family: 'Press Start 2P', cursive;
+    }
+
+    button {
+        margin: 10px;
+        padding: 10px 20px;
+        font-size: 1rem;
+        font-family: 'Press Start 2P', cursive;
+        color: black;
+        background-color: white;
+        border: none;
+        cursor: pointer;
+    }
+
+    button:hover {
+        background-color: gray;
+        color: white;
+    }
+</style>
+{% endblock %}

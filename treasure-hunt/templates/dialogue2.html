@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block title %}Dialogue{% endblock %}
+
+{% block content %}
+<div id="dialogue-container">
+    <img id="host" src="{{ url_for('static', filename='icons/host/happy.png') }}" alt="host">
+    <div id="dialogue-box">
+        <p id="dialogue-text">...</p>
+    </div>
+    <button id="next-button" onclick="nextDialogue()">Next</button>
+</div>
+
+<!-- Background Music -->
+<audio id="background-music" loop>
+    <source src="{{ url_for('static', filename='background-music/dialogue.mp3') }}" type="audio/mpeg">
+    Your browser does not support the audio element.
+</audio>
+
+<script>
+    const dialogues = [
+        "Yessssss, you're doing great!",
+        "Just one more task!",
+        "This one is tricky..."
+    ];
+    let dialogueStep = 0;
+    let musicStarted = false; // Flag to ensure music starts only once
+
+    function nextDialogue() {
+        const backgroundMusic = document.getElementById("background-music");
+        const hostImage = document.getElementById("host");
+
+        // Start the background music after the first click
+        if (!musicStarted) {
+            backgroundMusic.play();
+            musicStarted = true;
+        }
+
+        if (dialogueStep < dialogues.length) {
+            document.getElementById("dialogue-text").innerText = dialogues[dialogueStep];
+
+            // Change the host image when going to the last dialogue line
+            if (dialogueStep === 2) { 
+                hostImage.src = "{{ url_for('static', filename='icons/host/host.png') }}";
+            }
+
+            dialogueStep++;
+        } else {
+            location.href = "/task4"; // Redirect to the next task
+        }
+    }
+</script>
+
+<style>
+    #dialogue-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        height: 100%;
+    }
+
+    #host {
+        width: 150px;
+        height: auto;
+        margin-bottom: 20px;
+    }
+
+    #dialogue-box {
+        font-size: 1.2rem;
+        max-width: 80%;
+        margin: 20px auto;
+        font-family: 'Press Start 2P', cursive;
+    }
+
+    button {
+        margin: 10px;
+        padding: 10px 20px;
+        font-size: 1rem;
+        font-family: 'Press Start 2P', cursive;
+        color: black;
+        background-color: white;
+        border: none;
+        cursor: pointer;
+    }
+
+    button:hover {
+        background-color: gray;
+        color: white;
+    }
+</style>
+{% endblock %}

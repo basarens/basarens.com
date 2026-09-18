@@ -1,0 +1,229 @@
+{% extends "base.html" %}
+
+{% block title %}A Hidden Key{% endblock %}
+
+{% block content %}
+
+<!-- Flickering Overlay -->
+<div id="overlay">
+    <h1 id="flicker-title">A Hidden Key</h1>
+</div>
+
+
+<div id="task-container">
+    <!-- Visual Element -->
+    <img id="visual" src="{{ url_for('static', filename='icons/task/key.png') }}" alt="Key">
+
+    <!-- Task Title -->
+    <h1 id="task-title">{% block task_title %}A Hidden Key{% endblock %}</h1>
+
+    <!-- Task Description -->
+    <div id="riddle-container" style="display: none;">
+        <p id="riddle-line-1" style="display: none;">Above all rooms, where few dare tread,</p>
+        <p id="riddle-line-2" style="display: none;">I hold the memories of the things long dead.</p>
+        <p id="riddle-line-3" style="display: none;">Find me where the roof hugs the skies,</p>
+        <p id="riddle-line-4" style="display: none;">I’m the house’s crown, a <span style="color: #ffc400; font-weight: bold;">treasure</span> lies.</p>
+        <div id="button-container" style="display: none;">
+            <button id="enter-code-button" onclick="showCodeInput()">Enter Code</button>
+        </div>
+    </div>
+
+    <!-- Code Input Section -->
+    <div id="code-input-container" style="display: none;">
+        <div id="code-inputs">
+            <input type="text" maxlength="1" class="code-bar" />
+            <input type="text" maxlength="1" class="code-bar" />
+            <input type="text" maxlength="1" class="code-bar" />
+            <input type="text" maxlength="1" class="code-bar" />
+        </div>
+        <button id="back-button" onclick="showRiddle()">Back</button>
+        <button id="submit-code-button" onclick="validateCode()">Submit</button>
+        <p id="error-message" style="color: red; display: none;">Incorrect code. Try again.</p>
+    </div>
+
+    <!-- Next Button -->
+    <button id="next-task-button" style="display: none;" onclick="location.href='/dialogue1'">Next</button>
+</div>
+
+<!-- Success Sound -->
+<audio id="success-sound" src="{{ url_for('static', filename='sound-effects/success.wav') }}" preload="auto"></audio>
+
+<!-- Background Music -->
+<audio id="background-music" src="{{ url_for('static', filename='background-music/task1.mp3') }}" preload="auto" loop></audio>
+
+<script>
+    const correctCode = "2024"; // Define the correct code
+
+    // Flickering overlay functionality
+    document.addEventListener("DOMContentLoaded", () => {
+        const overlay = document.getElementById("overlay");
+        const taskContainer = document.getElementById("task-container");
+        const backgroundMusic = document.getElementById("background-music");
+
+        overlay.addEventListener("click", () => {
+            overlay.style.display = "none"; // Hide the overlay
+            taskContainer.style.display = "flex"; // Show the task container
+            
+             // Play background music
+             backgroundMusic.play();
+
+            // Hide task title and show riddle container after a delay
+            setTimeout(() => {
+                document.getElementById("task-title").style.display = "none";
+                document.getElementById("riddle-container").style.display = "block";
+
+                // Display the riddle lines one by one
+                showRiddleLine("riddle-line-1", 2950);
+                showRiddleLine("riddle-line-2", 5700);
+                showRiddleLine("riddle-line-3", 8300);
+                showRiddleLine("riddle-line-4", 10800, () => {
+                    document.getElementById("button-container").style.display = "block"; // Show the Enter Code button
+                });
+            }, 3000);
+        });
+    });
+
+    function showRiddleLine(id, delay, callback) {
+        setTimeout(() => {
+            const line = document.getElementById(id);
+            if (line) line.style.display = "block";
+            if (callback) callback();
+        }, delay);
+    }
+
+    function showCodeInput() {
+        document.getElementById("riddle-container").style.display = "none";
+        document.getElementById("code-input-container").style.display = "block";
+        document.querySelector(".code-bar").focus(); // Focus on the first code input
+    }
+
+    function showRiddle() {
+        document.getElementById("code-input-container").style.display = "none";
+        document.getElementById("riddle-container").style.display = "block";
+    }
+
+    function validateCode() {
+    const inputs = document.querySelectorAll(".code-bar");
+    const enteredCode = Array.from(inputs).map(input => input.value).join("");
+    if (enteredCode === correctCode) {
+        // Replace Key with Host Image
+        const visual = document.getElementById("visual");
+        visual.src = "{{ url_for('static', filename='icons/host/happy.png') }}";
+        visual.alt = "Happy Host";
+
+        // Stop the background music
+        document.getElementById("background-music").pause();
+        
+        // Replace the riddle container with the success message
+        const riddleContainer = document.getElementById("riddle-container");
+        riddleContainer.innerHTML = "<p style='font-size: 1.5rem;'>Nice work!</p>";
+        riddleContainer.style.display = "block"; // Ensure the riddle container is visible
+
+        // Play Success Sound
+        document.getElementById("success-sound").play();
+
+        // Show Next Button
+        document.getElementById("code-input-container").style.display = "none";
+        document.getElementById("next-task-button").style.display = "block";
+    } else {
+        document.getElementById("error-message").style.display = "block";
+    }
+}
+
+
+</script>
+
+<style>
+    /* Flickering Overlay */
+    #overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: black;
+        z-index: 10;
+        cursor: pointer;
+    }
+
+    #flicker-title {
+        font-family: 'Press Start 2P', cursive;
+        font-size: 2rem;
+        color: white;
+        animation: flicker 1.5s infinite;
+    }
+
+    @keyframes flicker {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+    }
+
+    /* Task Container */
+    #task-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        height: 100%;
+    }
+
+    h1, p {
+        font-family: 'Press Start 2P', cursive;
+    }
+
+    button {
+        margin: 10px;
+        padding: 10px 20px;
+        font-size: 1rem;
+        font-family: 'Press Start 2P', cursive;
+        color: black;
+        background-color: white;
+        border: none;
+        cursor: pointer;
+    }
+
+    button:hover {
+        background-color: gray;
+        color: white;
+    }
+
+    #code-inputs {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+    }
+
+    .code-bar {
+        width: 50px;
+        height: 50px;
+        font-size: 2rem;
+        text-align: center;
+        font-family: 'Press Start 2P', cursive;
+        background-color: white;
+        border: 2px solid black;
+        margin: 5px;
+    }
+
+    #error-message {
+        font-family: 'Press Start 2P', cursive;
+    }
+
+    #visual {
+        font-size: 4rem;
+        margin-bottom: 20px;
+        text-align: center;
+        width: 120px;
+        height: auto;
+    }
+
+    #button-container {
+        display: flex;
+        justify-content: center;
+        margin-top: 20px;
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,740 @@
+{% extends "base.html" %}
+
+{% block title %}Task 4: Final Boss{% endblock %}
+
+{% block content %}
+<div id="game-container">
+    <!-- Gabrielle's Side -->
+    <div id="gaby-container">
+        <img id="gaby" src="/static/icons/gaby/angry.png" alt="Gabrielle">
+    </div>
+
+    <!-- Host's Side -->
+    <div id="host-container">
+        <img id="host" src="/static/icons/psycho/happy.png" alt="Host">
+    </div>
+
+    <!-- Controls -->
+    <div id="controls-container">
+        <button onclick="performAction('attack')">Attack</button>
+        <button onclick="performAction('special')">Special Move</button>
+        <button onclick="performAction('defend')">Fart</button>
+        <button onclick="performAction('heal')">Heal</button>
+    </div>
+
+    <!-- Health Bars -->
+    <div id="health-bars">
+        <div class="health-bar">
+            <span>Gabrielle</span>
+            <div class="bar" id="gaby-health-bar"></div>
+        </div>
+        <div class="health-bar">
+            <span>Host</span>
+            <div class="bar" id="host-health-bar"></div>
+        </div>
+    </div>
+
+    <!-- Alert Message -->
+    <div id="message-container">
+        <p id="message"></p>
+    </div>
+
+    <!-- Retry Button -->
+    <div id="retry-container"></div>
+        <button id="retry-button" onclick="retryTask()" style="display: none;">Try Again</button>
+    </div>
+
+    <!-- Overlay -->
+    <div id="overlay" onclick="startGame()">
+        <h1 id="overlay-title">FIGHT</h1>
+    </div>
+
+    <!-- Background Music -->
+    <audio id="background-music" loop>
+        <source src="/static/background-music/task5.mp3" type="audio/mpeg">
+        Your browser does not support the audio element.
+    </audio>
+
+    <!-- Sound Effects -->
+    <audio id="heal-sound">
+        <source src="/static/sound-effects/heal.wav" type="audio/wav">
+        Your browser does not support the audio element.
+    </audio>
+
+    <audio id="attack-sound">
+        <source src="/static/sound-effects/attack.wav" type="audio/wav">
+        Your browser does not support the audio element.
+    </audio>
+
+    <audio id="defend-sound">
+        <source src="/static/sound-effects/defend.wav" type="audio/wav">
+        Your browser does not support the audio element.
+    </audio>
+
+    <audio id="evil-sound">
+        <source src="/static/sound-effects/evil-laugh.wav" type="audio/wav">
+        Your browser does not support the audio element.
+    </audio>
+
+    <audio id="special-sound">
+        <source src="/static/sound-effects/special.mp3" type="audio/wav">
+        Your browser does not support the audio element.
+    </audio>
+    
+    <audio id="player-dies-sound">
+        <source src="/static/sound-effects/player-dies.wav" type="audio/wav">
+        Your browser does not support the audio element.
+    </audio>
+
+    <audio id="player-wins-sound">
+        <source src="/static/sound-effects/player-wins.wav" type="audio/wav">
+        Your browser does not support the audio element.
+    </audio>
+
+    <audio id="final-round">
+        <source src="/static/sound-effects/final-round-fight.wav" type="audio/wav">
+        Your browser does not support the audio element.
+    </audio>
+
+
+</div>
+
+<style>
+    /* Game Container */
+    #game-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: space-between;
+        height: 100vh;
+        width: 100%;
+        background: url('/static/background/task5.gif') no-repeat center center fixed;
+        background-size: cover;
+        color: white;
+        overflow: hidden;
+        position: relative;
+    }
+
+    /* Gabrielle */
+    #gaby-container {
+        position: absolute;
+        bottom: 10%;
+        left: 10%;
+        width: 200px;
+        height: 200px; /* Set a fixed height */
+    }
+
+    #gaby {
+        width: 100%;
+        height: 100%; /* Ensure the image fills the container */
+        object-fit: contain; /* Adjust image scaling to fit inside the container */
+    }
+
+    /* Host */
+    #host-container {
+        position: absolute;
+        bottom: 10%;
+        right: 10%;
+        width: 225px;
+        height: 225px; /* Set a fixed height */
+    }
+
+    #host {
+        width: 100%;
+        height: 100%; /* Ensure the image fills the container */
+        object-fit: contain; /* Adjust image scaling to fit inside the container */
+    }
+
+    /* Controls */
+    #controls-container {
+        position: absolute;
+        bottom: 5%;
+        width: 90%;
+        display: flex;
+        justify-content: space-around;
+    }
+
+    #controls-container button {
+        padding: 10px 20px;
+        font-size: 1rem;
+        font-family: 'Press Start 2P', cursive;
+        background-color: white;
+        border: none;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+
+    #controls-container button:hover {
+        background-color: gray;
+        color: rgb(255, 255, 255);
+    }
+
+    /* Health Bars */
+    #health-bars {
+        position: absolute;
+        top: 5%;
+        width: 90%;
+        display: flex;
+        justify-content: space-between;
+    }
+
+    .health-bar {
+        width: 45%;
+    }
+
+    .health-bar span {
+        display: block;
+        text-align: center;
+        margin-bottom: 5px;
+    }
+
+    .bar {
+        width: 100%;
+        height: 20px;
+        background-color: rgb(55, 255, 0);
+        border: 2px solid white;
+        transition: width 0.3s ease;
+    }
+
+    /* Message Container */
+    #message-container {
+        position: absolute;
+        bottom: 60%;
+        width: 80%;
+        text-align: center;
+    }
+
+    #message {
+        font-family: 'Press Start 2P', cursive;
+        font-size: 1.2rem;
+        color: rgb(255, 255, 255);
+    }
+
+    #retry-container {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        display: none; /* Start hidden */
+        justify-content: center;
+        align-items: center;
+        z-index: 1000; /* Above other elements */
+        pointer-events: none; /* Allow clicks to pass through when inactive */
+    }
+
+    #retry-container.active {
+        display: flex; /* Show and activate the retry container */
+        pointer-events: auto; /* Allow interactions */
+        background-color: rgba(0, 0, 0, 0.5); /* Dim background to highlight the button */
+    }
+
+    #retry-button {
+        padding: 10px 20px;
+        font-size: 1rem;
+        font-family: 'Press Start 2P', cursive;
+        color: black;
+        background-color: white;
+        border: none;
+        cursor: pointer;
+    }
+
+    #retry-button:hover {
+        background-color: gray;
+        color: white;
+    }
+
+    .effect {
+        position: absolute;
+        width: 100px;
+        height: 100px;
+        background-size: contain;
+        background-repeat: no-repeat;
+        pointer-events: none; /* Prevent interaction */
+        animation: effect-animation 1s ease-out forwards;
+        z-index: 1500;
+    }
+
+    @keyframes effect-animation {
+        0% {
+            opacity: 1;
+            transform: scale(1);
+        }
+        100% {
+            opacity: 0;
+            transform: scale(2);
+        }
+    }
+
+    .projectile {
+        position: absolute;
+        width: 70px;
+        height: 70px;
+        background-size: contain;
+        background-repeat: no-repeat;
+        pointer-events: none; /* Prevent interaction */
+        animation: projectile-animation 0.7s linear forwards;
+        z-index: 1500;
+    }
+
+    @keyframes projectile-animation-right {
+        0% {
+            transform: translate(0, 0);
+        }
+        100% {
+            transform: translate(800px, 0px); /* Move right */
+        }
+    }
+
+    @keyframes projectile-animation-left {
+        0% {
+            transform: translate(0, 0);
+        }
+        100% {
+            transform: translate(-840px, 0px); /* Move left */
+        }
+    }
+
+    /* Overlay */
+    #overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: black;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 2000; /* Ensure it's above all elements */
+        cursor: pointer;
+    }
+
+    #overlay-title {
+        font-family: 'Press Start 2P', cursive;
+        font-size: 3rem;
+        color: white;
+        animation: flicker 1.5s infinite;
+        text-align: center;
+    }
+
+    /* Flickering Animation */
+    @keyframes flicker {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+    }
+
+</style>
+
+<script>
+
+    function startGame() {
+        // Hide the overlay
+        const overlay = document.getElementById("overlay");
+        overlay.style.display = "none";
+
+         // Play player-wins sound
+         const finalRound = document.getElementById("final-round");
+           finalRound.currentTime = 0; // Reset sound to start
+           finalRound.play();
+        
+        setTimeout(() => {
+            // Start background music
+            const music = document.getElementById("background-music");
+            music.play();
+        }, 2200);
+        
+    }
+
+    // Character Stats
+    let gabyHealth = 100;
+    let hostHealth = 100;
+    let lastAction = null; // Track the player's last action
+    let gameOver = false; // Track if the game is over
+
+    // First fight adjustments
+    let bossDamageMultiplier = 1.0; // Boss deals more damage
+    let bossHealAmount = 0; // Boss heals more health
+    let scriptedFight = false; // Flag for the first fight
+
+
+    // Update Health Bars
+    function updateHealthBars() {
+        setTimeout(() => {
+            document.getElementById("gaby-health-bar").style.width = `${gabyHealth}%`;
+            document.getElementById("host-health-bar").style.width = `${hostHealth}%`;
+        }, 700); // Delay by 700 milliseconds (0.7 seconds)
+    }
+
+    // Enable buttons when the page loads
+    document.addEventListener("DOMContentLoaded", () => {
+        enableButtons(); // Ensure buttons are enabled when the game starts
+    });
+
+    // Initialize Health Bars
+    updateHealthBars();
+
+    // Random Boss Action
+    function randomBossAction() {
+        const actions = ["attack", "special", "defend", "heal"];
+        const weights = scriptedFight ? [0.5, 0.4, 0.05, 0.05] : [0.4, 0.3, 0.2, 0.1]; // Favor attack/special during the first fight
+        const random = Math.random();
+
+        let cumulative = 0;
+        for (let i = 0; i < actions.length; i++) {
+            cumulative += weights[i];
+            if (random < cumulative) return actions[i];
+        }
+        return "attack"; // Default to attack
+    }
+
+    // Show Message
+    let currentMessageTimeout; // Track the active timeout
+
+    function showMessage(text, color) {
+        const messageElement = document.getElementById("message");
+        messageElement.textContent = text;
+        messageElement.style.color = color; // Set the text color
+
+        // Clear any existing timeout to prevent premature clearing
+        if (currentMessageTimeout) {
+            clearTimeout(currentMessageTimeout);
+        }
+
+        // Set a new timeout for clearing the message
+        currentMessageTimeout = setTimeout(() => {
+            messageElement.textContent = "";
+        }, 4000); // 5 seconds
+    }
+    
+
+    function disableButtons() {
+        const buttons = document.querySelectorAll("#controls-container button");
+        buttons.forEach(button => {
+            button.disabled = true; // Disable buttons
+            button.style.backgroundColor = "gray"; // Optional: change button style when disabled
+            button.style.cursor = "not-allowed"; // Optional: change cursor to indicate buttons are disabled
+        });
+    }
+
+    function enableButtons() {
+        const buttons = document.querySelectorAll("#controls-container button");
+        buttons.forEach(button => {
+            button.disabled = false; // Enable buttons
+            button.style.backgroundColor = "white"; // Restore button style
+            button.style.cursor = "pointer"; // Restore cursor
+        });
+    }
+
+
+    // Perform an Action
+    function performAction(action) {
+        if (gameOver) return; // Stop further actions if the game is over
+
+        const gaby = document.getElementById("gaby");
+        const host = document.getElementById("host");
+
+        const gabyRect = gaby.getBoundingClientRect();
+        const hostRect = host.getBoundingClientRect();
+
+
+        // Disable buttons while the player takes action and waits for the boss's reaction
+        disableButtons();
+
+        // Prevent special move being used twice in a row
+        if (action === "special" && lastAction === "special") {
+            showMessage("You can't use the special move twice in a row!", "red");
+            enableButtons(); // Re-enable buttons immediately if the action is invalid
+            return;
+        }
+
+        if (gabyHealth <= 20 && scriptedFight) {
+            setTimeout(() => {
+                showMessage("GameMaster B unleashed an unstoppable attack!", "red");
+
+                // Play evil sound
+                const evilSound = document.getElementById("evil-sound");
+                evilSound.currentTime = 0; // Reset sound to start
+                evilSound.play();
+
+                // Simulate the devastating attack
+                setTimeout(() => {
+                    gabyHealth = 0;
+                    updateHealthBars();
+                    checkGameOver(); // End the game
+                }, 2000);
+            }, 1000); // Delay before the attack
+            return; // End the turn early
+        }
+
+
+        // Player's Action
+        switch (action) {
+            case "attack":
+                gaby.src = "/static/icons/gaby/angry.png";
+                hostHealth -= 20;
+                showMessage("Gabrielle attacked the GameMaster B!", "white");
+                createProjectile("attack", gabyRect.x + gabyRect.width / 2, gabyRect.y + gabyRect.height / 2, "right");
+
+                const attackSound = document.getElementById("attack-sound");
+                attackSound.currentTime = 0; // Reset sound to start
+                attackSound.play();
+
+                setTimeout(() => (
+                    // Boss's Reaction
+                    host.src = "/static/icons/host/sad.png"
+                ), 700);
+                break;
+            // + gabyRect.width / 2 // + gabyRect.height / 2
+            case "special":
+                gaby.src = "/static/icons/gaby/cute.png";
+                hostHealth -= 30;
+                showMessage("Gabrielle used a special move!", "white");
+                createProjectile("special", gabyRect.x + gabyRect.width / 2, gabyRect.y + gabyRect.height / 2, "right");
+
+                const specialSound = document.getElementById("special-sound");
+                specialSound.currentTime = 0; // Reset sound to start
+                specialSound.play();
+
+                setTimeout(() => (
+                    // Boss's Reaction
+                    host.src = "/static/icons/host/sad.png"
+                ), 700);
+
+                break;
+
+            case "defend":
+                gaby.src = "/static/icons/gaby/cute.png";
+                gabyHealth += 0;
+                showMessage("Gabrielle farted!", "white");
+                createEffect("defend", gabyRect.x + gabyRect.width / 2, gabyRect.y + gabyRect.height / 2);
+
+                 // Play defend sound
+                 const defendSound = document.getElementById("defend-sound");
+                 defendSound.currentTime = 0; // Reset sound to start
+                 defendSound.play();
+                
+                break;
+
+            case "heal":
+                gaby.src = "/static/icons/gaby/sleepy.png";
+                gabyHealth += 20;
+                showMessage("Gabrielle healed herself!", "white");
+                createEffect("heal", gabyRect.x + gabyRect.width / 2, gabyRect.y + gabyRect.height / 2);
+
+                // Play heal sound
+                const healSound = document.getElementById("heal-sound");
+                healSound.currentTime = 0; // Reset sound to start
+                healSound.play();
+                break;
+        }
+
+        // Store the player's last action
+        lastAction = action;
+
+        // Prevent Overheal
+        gabyHealth = Math.min(gabyHealth, 100);
+        hostHealth = Math.max(hostHealth, 0);
+
+        // Update health bars
+        updateHealthBars();
+
+        // Check if the game is over immediately after the player's move
+        if (hostHealth <= 0 || gabyHealth <= 0) {
+            checkGameOver();
+            return; // Stop further logic since the game is over
+        }
+
+                // Boss's Turn
+                if (hostHealth > 0 && !gameOver) {
+                    const bossAction = randomBossAction();
+                    setTimeout(() => {
+                        if (gameOver) return;
+
+                        switch (bossAction) {
+                            case "attack":
+                                host.src = "/static/icons/psycho/happy.png";
+                                gabyHealth -= 30;
+                                showMessage("GameMaster B attacked Gabrielle!", "white");
+                                // For GameMaster B's attack
+                                createProjectile("attack", hostRect.x + hostRect.width / 2, hostRect.y + hostRect.height / 2, "left");
+
+                                const attackSound = document.getElementById("attack-sound");
+                                attackSound.currentTime = 0; // Reset sound to start
+                                attackSound.play();
+
+                                setTimeout(() => (
+                                    // Boss's Reaction
+                                    gaby.src = "/static/icons/gaby/hurt.png"
+                                ), 700);
+
+                                break;
+
+                            case "special":
+                                host.src = "/static/icons/psycho/happy.png";
+                                gabyHealth -= 40;
+                                showMessage("GameMaster B used a devastating special move!", "white");
+                                createProjectile("special", hostRect.x + hostRect.width / 2, hostRect.y + hostRect.height / 2, "left");
+
+                                const specialSound = document.getElementById("special-sound");
+                                specialSound.currentTime = 0; // Reset sound to start
+                                specialSound.play();
+
+                                setTimeout(() => (
+                                    // Boss's Reaction
+                                    gaby.src = "/static/icons/gaby/hurt.png"
+                                    ), 700);
+                                break;
+
+                            case "defend":
+                                host.src = "/static/icons/host/suprised.png";
+                                gabyHealth -= 10;
+                                showMessage("GameMaster B's fart was so vile.. Gabrielle took damage!", "white");
+                                createEffect(
+                                    "defend",
+                                    hostRect.x + hostRect.width / 2, // Center of host
+                                    hostRect.y + hostRect.height / 2 // Center of host
+                                );
+
+                                // Play defend sound
+                                const defendSound = document.getElementById("defend-sound");
+                                defendSound.currentTime = 0; // Reset sound to start
+                                defendSound.play();
+
+                                break;
+
+                            case "heal":
+                                host.src = "/static/icons/host/sleepy.png";
+                                hostHealth += 30;
+                                showMessage("GameMaster B healed himself!", "white");
+                                createEffect(
+                                    "heal",
+                                    hostRect.x + hostRect.width / 2, // Center of host
+                                    hostRect.y + hostRect.height / 2 // Center of host
+                                );
+
+                                // Play heal sound
+                                const healSound = document.getElementById("heal-sound");
+                                healSound.currentTime = 0; // Reset sound to start
+                                healSound.play();
+                                break;
+
+                                break;
+                        }
+
+                // Prevent Overheal
+                gabyHealth = Math.max(gabyHealth, 0);
+                hostHealth = Math.min(hostHealth, 100);
+
+                updateHealthBars();
+
+                // Re-enable buttons after boss's turn
+                enableButtons();
+
+                // Check End of Game after boss's turn
+                checkGameOver();
+            }, 4000);
+        }
+    }
+
+    function checkGameOver() {
+        const messageElement = document.getElementById("message");
+        const retryButton = document.getElementById("retry-button");
+
+        if (gabyHealth <= 0) {
+            gameOver = true; // Set game-over state
+            showMessage("Game Over! Gabrielle lost!", "red");
+            document.getElementById("gaby").src = "/static/icons/gaby/dead.png";
+
+             // Stop the background music
+             document.getElementById("background-music").pause();
+
+            // Play player-dies sound
+            const playerDiesSound = document.getElementById("player-dies-sound");
+            playerDiesSound.currentTime = 0; // Reset sound to start
+            playerDiesSound.play();
+
+
+            // Show the "Try Again" button
+            retryButton.style.display = "block";
+
+
+        } else if (hostHealth <= 0) {
+            gameOver = true; // Set game-over state
+            showMessage("Victory! Gabrielle defeated GameMaster B!", "rgb(55, 255, 0)");
+            document.getElementById("host").src = "/static/icons/host/dead.png";
+
+            // Stop the background music
+            document.getElementById("background-music").pause();
+
+            // Play player-wins sound
+            const playerWinsSound = document.getElementById("player-wins-sound");
+            playerWinsSound.currentTime = 0; // Reset sound to start
+            playerWinsSound.play();
+
+            // Ensure the message remains visible before redirecting
+            setTimeout(() => {
+                location.href = "/dialogue4"; // Redirect 
+            }, 6000); // Delay for 6 seconds
+        }
+    }
+
+    function createProjectile(type, startX, startY, direction) {
+        const projectile = document.createElement("div");
+        projectile.classList.add("projectile");
+
+        // Set the projectile image based on the type
+        if (type === "attack") {
+            projectile.style.backgroundImage = "url('/static/icons/effect/attack.png')";
+        } else if (type === "special") {
+            projectile.style.backgroundImage = "url('/static/icons/effect/special.png')";
+        }
+
+        // Start position
+        projectile.style.left = `${startX}px`;
+        projectile.style.top = `${startY}px`;
+
+        document.body.appendChild(projectile);
+
+        // Calculate the target x position based on direction
+        const targetX = direction === "left" ? -100 : window.innerWidth + 100; // Off-screen positions
+
+        // Dynamically set the animation based on direction
+        if (direction === "right") {
+            projectile.style.animation = "projectile-animation-right 0.7s linear forwards";
+        } else if (direction === "left") {
+            projectile.style.animation = "projectile-animation-left 0.7s linear forwards";
+        }
+
+        // Remove the projectile after animation ends
+        setTimeout(() => projectile.remove(), 1000); // Match the duration of the animation
+    }
+    function createEffect(type, x, y) {
+        const effect = document.createElement("div");
+        effect.classList.add("effect");
+
+        if (type === "heal") {
+            effect.style.backgroundImage = "url('/static/icons/effect/heal.png')";
+        } else if (type === "defend") {
+            effect.style.backgroundImage = "url('/static/icons/effect/defend.png')";
+        }
+
+        // Position the effect
+        effect.style.left = `${x}px`;
+        effect.style.top = `${y}px`;
+
+        document.body.appendChild(effect);
+
+        // Remove the effect after animation ends
+        setTimeout(() => effect.remove(), 1000);
+    }
+
+
+    function retryTask() {
+        location.href = "/retry"; // Redirect for a retry
+    }
+
+    
+</script>
+
+{% endblock %}

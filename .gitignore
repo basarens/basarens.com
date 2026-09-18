@@ -39,3 +39,11 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Imported Treasure Hunt source: the database is not used by the game and
+# should never be published with the website.
+/treasure-hunt/database.db
+/treasure-hunt/static/background-music/the-look.mp3
+
+# Generated from treasure-hunt/templates and treasure-hunt/static before dev/build.
+/public/games/treasure-hunt/

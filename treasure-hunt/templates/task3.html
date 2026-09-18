@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+
+{% block title %}Solve the Puzzle{% endblock %}
+
+{% block content %}
+<!-- Flickering Overlay -->
+<div id="overlay">
+    <h1 id="flicker-title">Hidden in Plain Sight</h1>
+</div>
+
+<div id="task-container">
+    <!-- Visual Element -->
+    <img id="visual" src="{{ url_for('static', filename='icons/task/question-mark.png') }}" alt="Mystery">
+
+    <!-- Task Title -->
+    <h1 id="task-title">{% block task_title %}Hidden in Plain Sight{% endblock %}</h1>
+
+    <!-- Input Section -->
+    <div id="input-container">
+        <p>Enter the solution you found:</p>
+        <input type="text" id="solution-input" placeholder="Type your answer here" oninput="convertToUppercase(this)">
+        <button onclick="checkAnswer()">Submit</button>
+        <p id="error-message" style="color: red; display: none;">That’s not it. Try again!</p>
+    </div>
+
+    <!-- Next Task Button -->
+    <button id="next-task-button" style="display: none;" onclick="location.href='/dialogue2'">Next</button>
+</div>
+
+ <!-- Background Music -->
+ <audio id="background-music" loop>
+    <source src="{{ url_for('static', filename='background-music/task3.mp3') }}" type="audio/mpeg">
+    Your browser does not support the audio element.
+</audio>
+
+<script>
+    const correctAnswer = "SNAKE"; // solution
+
+    // Flickering overlay functionality
+    document.addEventListener("DOMContentLoaded", () => {
+        const overlay = document.getElementById("overlay");
+        const taskContainer = document.getElementById("task-container");
+        const backgroundMusic = document.getElementById("background-music");
+
+        overlay.addEventListener("click", () => {
+            overlay.style.display = "none"; // Hide the overlay
+            taskContainer.style.display = "flex"; // Show the task container
+
+            // Start background music
+            backgroundMusic.play();
+        });
+    });
+
+    function checkAnswer() {
+        const input = document.getElementById("solution-input").value.toUpperCase();
+        if (input === correctAnswer) {
+            document.getElementById("input-container").innerHTML = `
+                <p style="font-size: 1.5rem;">
+                    <span style="color: #00FF00;">Correct!</span> You're ready for the next challenge.
+                </p>`;
+            document.getElementById("next-task-button").style.display = "block";
+        } else {
+            document.getElementById("error-message").style.display = "block";
+        }
+    }
+
+    function convertToUppercase(inputField) {
+        inputField.value = inputField.value.toUpperCase();
+    }
+
+</script>
+
+<style>
+     /* Flickering Overlay */
+     #overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: black;
+        z-index: 10;
+        cursor: pointer;
+    }
+
+    #flicker-title {
+        font-family: 'Press Start 2P', cursive;
+        font-size: 2rem;
+        animation: blink 1s infinite;
+    }
+
+    @keyframes blink {
+        0%, 100% {
+            opacity: 1;
+        }
+        50% {
+            opacity: 0;
+        }
+    }
+    
+    #task-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        height: 100%;
+    }
+
+    h1, p {
+        font-family: 'Press Start 2P', cursive;
+    }
+
+    button {
+        margin: 10px;
+        padding: 10px 20px;
+        font-size: 1rem;
+        font-family: 'Press Start 2P', cursive;
+        color: black;
+        background-color: white;
+        border: none;
+        cursor: pointer;
+    }
+
+    button:hover {
+        background-color: gray;
+        color: white;
+    }
+
+    input {
+        margin: 10px;
+        padding: 10px;
+        font-size: 1rem;
+        font-family: 'Press Start 2P', cursive;
+        border: 2px solid black;
+        width: 250px;
+    }
+
+    #visual {
+        font-size: 4rem;
+        margin-bottom: 20px;
+        text-align: center;
+        width: 120px;
+        height: auto;
+    }
+
+    #input-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+</style>
+{% endblock %}
