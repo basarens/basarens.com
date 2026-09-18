@@ -33,7 +33,7 @@ const projects = [
     number: "03",
     title: "Games",
     eyebrow: "Treasure Hunt · live",
-    href: "/games/treasure-hunt",
+    href: "/games",
     description:
       "Een retro avontuur met puzzels, muziek, een schat en een verhaal dat ik ooit zelf in Python bouwde.",
     mutedColor: "bg-[#fbb01f]",

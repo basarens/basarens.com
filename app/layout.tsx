@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Press_Start_2P } from "next/font/google";
 import "leaflet/dist/leaflet.css";
 import "./globals.css";
 
@@ -13,6 +13,12 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const pressStart = Press_Start_2P({
+  variable: "--font-press-start",
+  subsets: ["latin"],
+  weight: "400",
+});
+
 export const metadata: Metadata = {
   title: "Bas Arens — persoonlijke playground",
   description:
@@ -21,7 +27,10 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="nl" className={`${geistSans.variable} ${geistMono.variable}`}>
+    <html
+      lang="nl"
+      className={`${geistSans.variable} ${geistMono.variable} ${pressStart.variable}`}
+    >
       <body>{children}</body>
     </html>
   );

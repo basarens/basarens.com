@@ -1,10 +1,10 @@
-import Link from "next/link";
 import { RomeAgenda } from "@/components/rome-agenda";
 import { RomeCountdown } from "@/components/rome-countdown";
 import { RomeMapSection } from "@/components/rome-map-section";
 import { RomePackingChecklist } from "@/components/rome-packing-checklist";
 import { RomePhotoAlbum } from "@/components/rome-photo-album";
 import { RomePizzaPayGame } from "@/components/rome-pizza-pay-game";
+import { SiteBackButton } from "@/components/site-back-button";
 
 const packingAllowed = [
   "1 accessoire onder de stoel: maximaal 40 × 30 × 15 cm.",
@@ -27,13 +27,7 @@ export default function Rome2026Page() {
     <main className="min-h-screen bg-[#ffd2dd] text-[#b31c38]">
       <div className="mx-auto flex min-h-screen max-w-6xl flex-col px-6 py-6 sm:px-10 lg:px-16">
         <header className="flex items-center justify-between border-b border-[#b31c38]/20 pb-5">
-          <Link
-            className="inline-flex items-center gap-2 text-sm font-medium transition-opacity hover:opacity-60"
-            href="/"
-          >
-            <span aria-hidden="true">←</span>
-            basarens.com
-          </Link>
+          <SiteBackButton />
           <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#b31c38]/60 sm:text-xs">
             Trip companion · in opbouw
           </p>
