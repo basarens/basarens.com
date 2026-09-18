@@ -45,6 +45,7 @@ function renderTemplate(template, baseTemplate) {
       /\{\{\s*url_for\(\s*["']static["']\s*,\s*filename\s*=\s*["']([^"']+)["']\s*\)\s*\}\}/g,
       (_, assetPath) => `/games/treasure-hunt/assets/${assetPath}`,
     )
+    .replace(/(["'])\/static\//g, "$1/games/treasure-hunt/assets/")
     .replace(/((?:window\.)?location\.href\s*=\s*["'])\/([a-z0-9]+)(["'])/gi, (_, before, route, after) => {
       return `${before}/games/treasure-hunt/play/${outputFileForRoute(route)}${after}`;
     });
