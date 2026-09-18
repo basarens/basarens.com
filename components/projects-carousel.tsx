@@ -54,6 +54,19 @@ const projects = [
     labelColor: "text-[#d7f2dd]",
     accentColor: "#bbdfb2",
   },
+  {
+    number: "05",
+    title: "Repertoire",
+    eyebrow: "Piano · 11 stukken",
+    href: "/repertoire",
+    description:
+      "Een persoonlijke muziekmap met stukken die ik wil leren, opnieuw wil spelen of gewoon wil bewaren.",
+    mutedColor: "bg-[#474295]",
+    mainColor: "bg-[#665dc3]",
+    textColor: "text-white",
+    labelColor: "text-[#e5e1ff]",
+    accentColor: "#bdb5ff",
+  },
 ];
 
 export function ProjectsCarousel() {
