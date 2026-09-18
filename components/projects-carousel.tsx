@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useRef, useState, type CSSProperties, type PointerEvent } from "react";
+import { useRef, useState, type PointerEvent } from "react";
+import { PlaygroundPhysicsTitle } from "@/components/playground-physics-title";
 
 const projects = [
   {
@@ -69,35 +70,6 @@ const projects = [
   },
 ];
 
-function FallingTitle({ title }: { title: string }) {
-  return (
-    <h2
-      aria-label={title}
-      className="mt-2 text-4xl font-semibold leading-none tracking-[-0.075em] sm:text-6xl"
-    >
-      {Array.from(title).map((character, index) => {
-        const rotation = `${(index % 2 === 0 ? 1 : -1) * (12 + (index % 4) * 7)}deg`;
-
-        return (
-          <span
-            aria-hidden="true"
-            className="project-letter inline-block will-change-transform"
-            key={`${character}-${index}`}
-            style={
-              {
-                "--letter-index": index,
-                "--letter-rotation": rotation,
-              } as CSSProperties
-            }
-          >
-            {character === " " ? "\u00a0" : character}
-          </span>
-        );
-      })}
-    </h2>
-  );
-}
-
 export function ProjectsCarousel() {
   const carouselRef = useRef<HTMLDivElement>(null);
   const dragStartX = useRef(0);
@@ -157,6 +129,7 @@ export function ProjectsCarousel() {
     const card = (
       <article
         className={`relative aspect-[0.86] w-full overflow-hidden rounded-[2.5rem] p-5 shadow-sm transition duration-500 ease-out group-hover:-translate-y-2 group-hover:rotate-[-1deg] sm:aspect-square sm:p-8 ${project.mainColor} ${project.textColor}`}
+        data-physics-playground-card={project.title === "Playground" ? "true" : undefined}
       >
         <div
           className={`absolute -bottom-[87%] -left-[87%] h-[174%] w-[174%] rounded-full transition-transform duration-700 ease-out group-hover:scale-105 group-hover:-translate-y-3 ${project.mutedColor}`}
@@ -177,7 +150,13 @@ export function ProjectsCarousel() {
             <p className={`font-mono text-[10px] uppercase tracking-[0.14em] ${project.labelColor}`}>
               {project.eyebrow}
             </p>
-            <FallingTitle title={project.title} />
+            {project.title === "Playground" ? (
+              <PlaygroundPhysicsTitle title={project.title} />
+            ) : (
+              <h2 className="mt-2 text-4xl font-semibold leading-none tracking-[-0.075em] sm:text-6xl">
+                {project.title}
+              </h2>
+            )}
             <p className="mt-4 max-w-xs text-[13px] leading-relaxed opacity-70 sm:mt-5 sm:text-base">
               {project.description}
             </p>
@@ -186,7 +165,7 @@ export function ProjectsCarousel() {
       </article>
     );
 
-    const wrapperClass = "project-card group relative w-[84vw] shrink-0 snap-center sm:w-[520px]";
+    const wrapperClass = "group relative w-[84vw] shrink-0 snap-center sm:w-[520px]";
 
     if (!project.href) {
       return (
