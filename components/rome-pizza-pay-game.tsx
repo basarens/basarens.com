@@ -66,7 +66,7 @@ export function RomePizzaPayGame() {
     <>
       <button
         aria-haspopup="dialog"
-        className="fixed bottom-5 right-5 z-40 inline-flex items-center gap-2 rounded-full bg-[#ce0f3d] px-5 py-3 text-sm font-semibold text-white shadow-[5px_6px_0_#76142a] transition-transform duration-300 hover:-translate-y-1 hover:rotate-[-2deg] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#ce0f3d] sm:bottom-8 sm:right-8"
+        className="fixed bottom-5 right-5 z-[1100] inline-flex items-center gap-2 rounded-full bg-[#ce0f3d] px-5 py-3 text-sm font-semibold text-white shadow-[5px_6px_0_#76142a] transition-transform duration-300 hover:-translate-y-1 hover:rotate-[-2deg] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#ce0f3d] sm:bottom-8 sm:right-8"
         onClick={openGame}
         type="button"
       >
@@ -75,7 +75,7 @@ export function RomePizzaPayGame() {
       </button>
 
       {isOpen ? (
-        <div aria-labelledby="pizza-game-title" aria-modal="true" className="fixed inset-0 z-50 grid items-end bg-[#023a4f]/60 p-0 backdrop-blur-sm sm:place-items-center sm:p-6" role="dialog">
+        <div aria-labelledby="pizza-game-title" aria-modal="true" className="fixed inset-0 z-[1200] grid items-end bg-[#023a4f]/60 p-0 backdrop-blur-sm sm:place-items-center sm:p-6" role="dialog">
           <button aria-label="Sluit Pizza Roulette" className="absolute inset-0" onClick={() => setIsOpen(false)} type="button" />
           <div className="relative max-h-[92dvh] w-full max-w-3xl overflow-x-hidden overflow-y-auto rounded-t-[2.5rem] bg-[#fff4dc] p-6 text-[#76142a] shadow-[16px_18px_0_#76142a] animate-[pizza-pop_500ms_cubic-bezier(0.16,1,0.3,1)] sm:rounded-[2.5rem] sm:p-9">
             <div className="absolute -right-20 -top-20 h-56 w-56 rounded-full border-[26px] border-[#ce0f3d]/20" />
