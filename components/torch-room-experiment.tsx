@@ -88,25 +88,30 @@ export function TorchRoomExperiment() {
               }
             } else {
               const brightness = Math.round(16 + light * 57);
-              drawingContext.fillStyle = `rgb(${brightness + 21}, ${brightness + 15}, ${brightness})`;
+              const stoneVariation = (x * 17 + y * 29) % 3;
+              drawingContext.fillStyle = `rgb(${brightness + 17 + stoneVariation * 4}, ${brightness + 12 + stoneVariation * 3}, ${brightness + 2})`;
               drawingContext.fillRect(x * tileSize, y * tileSize, tileSize, tileSize);
-              if (light > 0.18) {
-                drawingContext.fillStyle = "rgba(255, 218, 126, 0.16)";
-                drawingContext.fillRect(x * tileSize + 1, y * tileSize + 1, tileSize - 2, 1);
+
+              if (light > 0.12) {
+                drawingContext.fillStyle = "rgba(11, 10, 14, 0.48)";
+                drawingContext.fillRect(x * tileSize + 1, y * tileSize + tileSize - 2, tileSize - 2, 1);
+                drawingContext.fillRect(x * tileSize + tileSize - 2, y * tileSize + 1, 1, tileSize - 3);
+
+                const detail = (x * 31 + y * 13) % 7;
+                if (detail === 0 || detail === 3) {
+                  drawingContext.fillStyle = "rgba(98, 132, 64, 0.72)";
+                  drawingContext.fillRect(x * tileSize + 4, y * tileSize + 6, 1, 4);
+                  drawingContext.fillRect(x * tileSize + 5, y * tileSize + 7, 2, 1);
+                  drawingContext.fillRect(x * tileSize + 3, y * tileSize + 8, 1, 1);
+                } else if (detail === 5) {
+                  drawingContext.fillStyle = "rgba(31, 25, 29, 0.68)";
+                  drawingContext.fillRect(x * tileSize + 4, y * tileSize + 4, 3, 1);
+                  drawingContext.fillRect(x * tileSize + 6, y * tileSize + 5, 1, 3);
+                }
               }
             }
           }
         }
-      }
-
-      const emberCount = 6;
-      for (let ember = 0; ember < emberCount; ember += 1) {
-        const angle = time / 530 + ember * 1.12;
-        const distance = 16 + ((ember * 13) % 30) + Math.sin(time / 260 + ember) * 3;
-        const emberX = player.x + Math.cos(angle) * distance;
-        const emberY = player.y + Math.sin(angle * 1.7) * distance;
-        drawingContext.fillStyle = ember % 2 ? "#ffb01f" : "#ff6c37";
-        drawingContext.fillRect(Math.round(emberX), Math.round(emberY), 2, 2);
       }
 
       drawingContext.fillStyle = "#fbce55";
