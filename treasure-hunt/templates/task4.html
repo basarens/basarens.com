@@ -20,9 +20,9 @@
     <!-- Puzzle Container -->
     <div id="puzzle-container"></div>
     
-    <!-- Song Info (Initially Hidden) -->
+    <!-- Completion message (Initially Hidden) -->
     <p id="song-info" style="display: none; font-family: 'Press Start 2P', cursive; font-size: 1rem; color: white; text-align: center;"><br>
-        Now Playing: "The Look" by Metronomy
+        Puzzle complete!
     </p>
 
     <!-- Buttons -->
@@ -30,17 +30,6 @@
     <button id="shuffle-button" style="margin-top: 20px;" onclick="shuffleTiles()">Shuffle</button>
     <button id="next-button" style="display: none;" onclick="location.href='/dialogue3'">Next</button>
 </div>
-
- <!-- Background Music -->
- <audio id="background-music" loop>
-    <source src="{{ url_for('static', filename='background-music/the-look.mp3') }}" type="audio/mpeg">
-    Your browser does not support the audio element.
-</audio>
-
-<audio id="the-look-music">
-    <source src="{{ url_for('static', filename='background-music/the-look.mp3') }}" type="audio/mpeg">
-    Your browser does not support the audio element.
-</audio>
 
 <script>
     const imageSrc = "{{ url_for('static', filename='background/image.png') }}"; // Path to the puzzle image
@@ -50,8 +39,6 @@
     const overlay = document.getElementById('overlay');
     const overlayText = document.getElementById('overlay-text');
     const taskContainer = document.getElementById('task-container');
-    const backgroundMusic = document.getElementById('background-music');
-    const theLookMusic = document.getElementById('the-look-music');
     const hintButton = document.getElementById('hint-button');
     const shuffleButton = document.getElementById('shuffle-button');
     const hintsContainer = document.getElementById('hints-container');
@@ -70,14 +57,6 @@
         '6. Move around the remaining tiles to complete the puzzle.',
         '7. If the puzzle cannot be solved, you need to shuffle and try again.'
     ];
-
-    // Ensure the background music loops only the first 10 seconds
-    backgroundMusic.addEventListener('timeupdate', () => {
-        if (backgroundMusic.currentTime > 11.05) {
-            backgroundMusic.currentTime = 0; // Reset to the beginning
-            backgroundMusic.play(); // Loop
-        }
-    });
 
     function createPuzzle() {
         tiles = [];
@@ -175,17 +154,6 @@
     function checkCompletion() {
         let isSolved = tiles.every((tile, index) => tile.dataset.position === `${Math.floor(index / gridSize)}-${index % gridSize}`);
         if (isSolved) {
-            // Stop the looping behavior of background music
-            backgroundMusic.removeEventListener('timeupdate', () => {});
-            backgroundMusic.loop = false;
-
-            // Allow the music to continue from the current position and play the full song
-            theLookMusic.currentTime = backgroundMusic.currentTime; // Start where background left off
-            theLookMusic.play();
-            backgroundMusic.pause();
-            theLookMusic.volume = 1.0; // Set the volume to 100%
-
-            // Fade in the complete image
             fadeInCompleteImage();
         }
     }
@@ -219,30 +187,17 @@
 
         const nextButton = document.getElementById('next-button');
 
-        // Display the next button after the the look music is on 15 seconds
-        showNextButtonWhenMusicPlays();
-        showArtist();
+        showNextButton();
     }
 
-    function showNextButtonWhenMusicPlays() {
+    function showNextButton() {
         const nextButton = document.getElementById("next-button");
-        const theLookMusic = document.getElementById("the-look-music");
-        const songInfo = document.getElementById("song-info"); // Get song info element
+        const completionMessage = document.getElementById("song-info");
 
-        // Check every 500ms (0.5 seconds) if the music has reached 15s
-        const checkInterval = setInterval(() => {
-            if (theLookMusic.currentTime >= 19.5) {
-                nextButton.style.display = "block"; // Show the next button
-                songInfo.style.display = "block"; // Show song info
-                clearInterval(checkInterval); // Stop checking once it's shown
-            }
-        }, 500); // Check every 500ms
-    }
-
-    // Show text that displays the artist and name of the song
-    function showArtist() {
-        const artistName = document.getElementById("artist-name");
-        artistName.textContent = "Metronomy: The Look";
+        setTimeout(() => {
+            nextButton.style.display = "block";
+            completionMessage.style.display = "block";
+        }, 3100);
     }
 
     function showHint() {
@@ -276,19 +231,6 @@
     overlayText.addEventListener("click", () => {
     overlay.style.display = "none"; // Hide the overlay
     taskContainer.style.display = "flex"; // Show the task container
-
-    // Let background music play after 10 seconds
-    setTimeout(() => {
-            backgroundMusic.play();
-            backgroundMusic.volume = 0;
-            let fadeInterval = setInterval(() => {
-                if (backgroundMusic.volume < 0.2) {
-                    backgroundMusic.volume = Math.min(backgroundMusic.volume + 0.05, 0.2);
-                } else {
-                    clearInterval(fadeInterval);
-                }
-            }, 200);
-        }, 10000);
 
     createPuzzle();
 });
