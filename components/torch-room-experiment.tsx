@@ -6,6 +6,7 @@ const canvasWidth = 320;
 const canvasHeight = 216;
 const tileSize = 12;
 const room = { left: 2, top: 1, width: 23, height: 16 };
+const lightSwitch = { x: room.left + 2, y: room.top + room.height - 2 };
 const doorTiles = new Set([
   `${room.left + Math.floor(room.width / 2)},${room.top}`,
   `${room.left + Math.floor(room.width / 2)},${room.top + room.height - 1}`,
@@ -46,6 +47,7 @@ export function TorchRoomExperiment() {
       x: (room.left + room.width / 2) * tileSize,
       y: (room.top + room.height / 2) * tileSize,
     };
+    let lightsOn = false;
     let frameId = 0;
     let previousTime = performance.now();
 
@@ -71,13 +73,16 @@ export function TorchRoomExperiment() {
 
       const flicker = Math.sin(time / 105) * 3 + Math.sin(time / 59) * 1.5;
       const torchRadius = 37 + flicker;
+      const switchX = lightSwitch.x * tileSize + tileSize / 2;
+      const switchY = lightSwitch.y * tileSize + tileSize / 2;
 
       for (let y = room.top; y < room.top + room.height; y += 1) {
         for (let x = room.left; x < room.left + room.width; x += 1) {
           const centerX = x * tileSize + tileSize / 2;
           const centerY = y * tileSize + tileSize / 2;
           const distance = Math.hypot(centerX - player.x, centerY - player.y);
-          const light = Math.max(0, 1 - distance / torchRadius);
+          const torchLight = Math.max(0, 1 - distance / torchRadius);
+          const light = lightsOn ? 1 : torchLight;
           const isDoor = doorTiles.has(tileKey(x, y));
           const isWall =
             !isDoor &&
@@ -137,6 +142,18 @@ export function TorchRoomExperiment() {
         }
       }
 
+      const switchIsVisible = lightsOn || Math.hypot(switchX - player.x, switchY - player.y) < torchRadius;
+      if (switchIsVisible) {
+        const switchLeft = lightSwitch.x * tileSize + 3;
+        const switchTop = lightSwitch.y * tileSize + 2;
+        drawingContext.fillStyle = "#1d1d23";
+        drawingContext.fillRect(switchLeft - 1, switchTop - 1, 8, 10);
+        drawingContext.fillStyle = "#b9b7ad";
+        drawingContext.fillRect(switchLeft, switchTop, 6, 8);
+        drawingContext.fillStyle = lightsOn ? "#5edb75" : "#d55945";
+        drawingContext.fillRect(switchLeft + 2, switchTop + (lightsOn ? 1 : 4), 2, 3);
+      }
+
       drawingContext.fillStyle = "#fbce55";
       drawingContext.fillRect(Math.round(player.x - 3), Math.round(player.y - 5), 6, 8);
       drawingContext.fillStyle = "#fff6c7";
@@ -148,8 +165,8 @@ export function TorchRoomExperiment() {
       drawingContext.font = "7px monospace";
       drawingContext.fillText("ROOM_01", 12, 13);
       drawingContext.fillStyle = "#fdc32d";
-      drawingContext.fillText("TORCH", 252, 13);
-      drawingContext.fillStyle = "#ff6c37";
+      drawingContext.fillText(lightsOn ? "LIGHT" : "TORCH", 252, 13);
+      drawingContext.fillStyle = lightsOn ? "#5edb75" : "#ff6c37";
       drawingContext.fillRect(289, 7, 19, 5);
     }
 
@@ -176,6 +193,17 @@ export function TorchRoomExperiment() {
 
     function handleKeyDown(event: KeyboardEvent) {
       const key = event.key.toLowerCase();
+
+      if (event.code === "Space" && !event.repeat) {
+        const switchX = lightSwitch.x * tileSize + tileSize / 2;
+        const switchY = lightSwitch.y * tileSize + tileSize / 2;
+        event.preventDefault();
+        if (Math.hypot(switchX - player.x, switchY - player.y) < tileSize * 1.5) {
+          lightsOn = !lightsOn;
+        }
+        return;
+      }
+
       if (["arrowup", "arrowdown", "arrowleft", "arrowright", "w", "a", "s", "d"].includes(key)) {
         pressedKeys.current.add(event.key.startsWith("Arrow") ? event.key : key);
         event.preventDefault();
@@ -220,7 +248,7 @@ export function TorchRoomExperiment() {
           </div>
           <p className="max-w-xs text-right font-mono text-[9px] uppercase leading-relaxed tracking-[0.1em] text-white/45 sm:text-[10px]">
             Loop met WASD of pijltjes.<br />
-            Vind je weg in het donker.
+            Vind de schakelaar. Druk spatie.
           </p>
         </div>
 
