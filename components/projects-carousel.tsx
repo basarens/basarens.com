@@ -238,7 +238,14 @@ export function ProjectsCarousel() {
                 <p className={`font-mono text-[10px] uppercase tracking-[0.16em] ${projectInDevelopment.labelColor}`}>
                   Project {projectInDevelopment.number} · in de werkplaats
                 </p>
-                <span aria-hidden="true" className="grid h-10 w-10 place-items-center rounded-full border border-white/30 text-lg animate-[gentle-spin_8s_linear_infinite]">✦</span>
+                <button
+                  aria-label="Sluit melding"
+                  className="inline-flex min-h-10 items-center gap-2 rounded-full border border-white/30 bg-white/10 px-3 font-mono text-[10px] uppercase tracking-[0.12em] text-white shadow-[3px_4px_0_rgba(2,58,79,0.32)] transition-[transform,background-color,box-shadow] hover:-translate-y-0.5 hover:bg-white/20 hover:shadow-[4px_5px_0_rgba(2,58,79,0.32)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white active:translate-x-0.5 active:translate-y-0.5 active:shadow-[1px_2px_0_rgba(2,58,79,0.32)]"
+                  onClick={() => setProjectInDevelopment(null)}
+                  type="button"
+                >
+                  Sluiten <span aria-hidden="true" className="text-base leading-none">×</span>
+                </button>
               </div>
               <h2 className="mt-10 text-5xl font-semibold leading-[0.9] tracking-[-0.08em]" id="development-title">
                 {projectInDevelopment.title} is nog aan het groeien.
@@ -249,13 +256,6 @@ export function ProjectsCarousel() {
               <div className="mt-8 rounded-2xl border border-white/20 bg-white/10 p-4 font-mono text-[10px] uppercase tracking-[0.14em] text-white/75">
                 Status: nieuwsgierigheid wordt gebouwd
               </div>
-              <button
-                className="mt-8 rounded-full bg-white px-5 py-3 text-sm font-medium text-[#023a4f] shadow-[4px_5px_0_rgba(2,58,79,0.35)] transition-transform hover:-translate-y-0.5"
-                onClick={() => setProjectInDevelopment(null)}
-                type="button"
-              >
-                Terug naar de playground →
-              </button>
             </div>
           </div>
         </div>
