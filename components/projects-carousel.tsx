@@ -46,9 +46,10 @@ const projects = [
   {
     number: "04",
     title: "Playground",
-    eyebrow: "Experimenten · altijd open",
+    eyebrow: "Torch test · live",
+    href: "/playground/torch",
     description:
-      "Een verzamelplek voor ideeën die nog geen categorie, plan of einddatum nodig hebben.",
+      "Een donkere pixelkamer waarin ik experimenteer met lopen, licht en het gevoel van verdwalen.",
     mutedColor: "bg-[#0d5748]",
     mainColor: "bg-[#006853]",
     textColor: "text-white",
