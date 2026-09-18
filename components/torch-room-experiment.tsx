@@ -117,6 +117,8 @@ function doorAt(roomSpec: RoomSpec, x: number, y: number) {
 export function TorchRoomExperiment() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const pressedKeys = useRef(new Set<string>());
+  const interactionRequested = useRef(false);
+  const touchInput = useRef<{ direction: Direction; startedAt: number } | null>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -193,6 +195,18 @@ export function TorchRoomExperiment() {
       if (direction && nextRoomId) {
         activeRoomId = nextRoomId;
         placePlayerAtEntrance(direction);
+      }
+    }
+
+    function interact() {
+      const switchX = lightSwitch.x * tileSize + tileSize / 2;
+      const switchY = lightSwitch.y * tileSize + tileSize / 2;
+      if (
+        activeRoomId === "chamber" &&
+        Math.hypot(switchX - player.x, switchY - player.y) < tileSize * 1.5
+      ) {
+        if (litRooms.has(activeRoomId)) litRooms.delete(activeRoomId);
+        else litRooms.add(activeRoomId);
       }
     }
 
@@ -388,6 +402,10 @@ export function TorchRoomExperiment() {
       if (horizontal && isWalkable(nextX, player.y)) player.x = nextX;
       if (vertical && isWalkable(player.x, nextY)) player.y = nextY;
       moveThroughDoor();
+      if (interactionRequested.current) {
+        interact();
+        interactionRequested.current = false;
+      }
 
       draw(time);
       frameId = requestAnimationFrame(update);
@@ -397,16 +415,8 @@ export function TorchRoomExperiment() {
       const key = event.key.toLowerCase();
 
       if (event.code === "Space" && !event.repeat) {
-        const switchX = lightSwitch.x * tileSize + tileSize / 2;
-        const switchY = lightSwitch.y * tileSize + tileSize / 2;
         event.preventDefault();
-        if (
-          activeRoomId === "chamber" &&
-          Math.hypot(switchX - player.x, switchY - player.y) < tileSize * 1.5
-        ) {
-          if (litRooms.has(activeRoomId)) litRooms.delete(activeRoomId);
-          else litRooms.add(activeRoomId);
-        }
+        interact();
         return;
       }
 
@@ -431,10 +441,42 @@ export function TorchRoomExperiment() {
     };
   }, []);
 
-  function setDirection(direction: Direction, isMoving: boolean) {
-    const key = keyForDirection(direction);
-    if (isMoving) pressedKeys.current.add(key);
-    else pressedKeys.current.delete(key);
+  function getTouchDirection(event: React.PointerEvent<HTMLCanvasElement>) {
+    const bounds = event.currentTarget.getBoundingClientRect();
+    const horizontal = event.clientX - bounds.left - bounds.width / 2;
+    const vertical = event.clientY - bounds.top - bounds.height / 2;
+
+    if (Math.abs(horizontal) > Math.abs(vertical)) return horizontal < 0 ? "left" : "right";
+    return vertical < 0 ? "up" : "down";
+  }
+
+  function startTouchMove(event: React.PointerEvent<HTMLCanvasElement>) {
+    const direction = getTouchDirection(event);
+    event.currentTarget.setPointerCapture(event.pointerId);
+    pressedKeys.current.add(keyForDirection(direction));
+    touchInput.current = { direction, startedAt: performance.now() };
+  }
+
+  function changeTouchMove(event: React.PointerEvent<HTMLCanvasElement>) {
+    const activeTouch = touchInput.current;
+    if (!activeTouch) return;
+
+    const direction = getTouchDirection(event);
+    if (direction === activeTouch.direction) return;
+    pressedKeys.current.delete(keyForDirection(activeTouch.direction));
+    pressedKeys.current.add(keyForDirection(direction));
+    touchInput.current = { ...activeTouch, direction };
+  }
+
+  function endTouchMove(shouldInteract: boolean) {
+    const activeTouch = touchInput.current;
+    if (!activeTouch) return;
+
+    pressedKeys.current.delete(keyForDirection(activeTouch.direction));
+    if (shouldInteract && performance.now() - activeTouch.startedAt < 180) {
+      interactionRequested.current = true;
+    }
+    touchInput.current = null;
   }
 
   return (
@@ -453,56 +495,26 @@ export function TorchRoomExperiment() {
             </h1>
           </div>
           <p className="max-w-xs text-right font-mono text-[9px] uppercase leading-relaxed tracking-[0.1em] text-white/45 sm:text-[10px]">
-            Loop met WASD of pijltjes.<br />
-            Loop door een deur naar de volgende kamer.
+            Computer: WASD of pijltjes.<br />
+            Mobiel: houd een zijde ingedrukt. Tik = actie.
           </p>
         </div>
 
         <div className="relative overflow-hidden border-4 border-[#31202a] bg-black shadow-[0_0_0_4px_#8f3e30,10px_12px_0_#030306]">
           <canvas
             aria-label="Een donkere pixelkamer waarin je met een fakkel rondloopt"
-            className="block h-auto w-full [image-rendering:pixelated]"
+            className="block h-auto w-full touch-none select-none [image-rendering:pixelated]"
             height={canvasHeight}
+            onPointerCancel={() => endTouchMove(false)}
+            onPointerDown={startTouchMove}
+            onPointerMove={changeTouchMove}
+            onPointerUp={() => endTouchMove(true)}
             ref={canvasRef}
             tabIndex={0}
             width={canvasWidth}
           />
         </div>
-
-        <div className="mx-auto mt-7 grid w-40 grid-cols-3 gap-2 sm:hidden">
-          <span />
-          <DirectionButton direction="up" onMove={setDirection}>↑</DirectionButton>
-          <span />
-          <DirectionButton direction="left" onMove={setDirection}>←</DirectionButton>
-          <DirectionButton direction="down" onMove={setDirection}>↓</DirectionButton>
-          <DirectionButton direction="right" onMove={setDirection}>→</DirectionButton>
-        </div>
       </div>
     </section>
-  );
-}
-
-function DirectionButton({
-  children,
-  direction,
-  onMove,
-}: {
-  children: React.ReactNode;
-  direction: Direction;
-  onMove: (direction: Direction, isMoving: boolean) => void;
-}) {
-  return (
-    <button
-      className="grid aspect-square place-items-center border-2 border-[#8f3e30] bg-[#1a1015] font-mono text-xl text-[#fdc32d] active:translate-y-0.5 active:bg-[#6f2631]"
-      onPointerCancel={() => onMove(direction, false)}
-      onPointerDown={(event) => {
-        event.currentTarget.setPointerCapture(event.pointerId);
-        onMove(direction, true);
-      }}
-      onPointerUp={() => onMove(direction, false)}
-      type="button"
-    >
-      {children}
-    </button>
   );
 }
