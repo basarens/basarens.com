@@ -2,27 +2,28 @@
 
 import { useEffect, useRef } from "react";
 
-const canvasWidth = 320;
+const canvasWidth = 312;
 const canvasHeight = 216;
 const tileSize = 12;
-const room = { left: 2, top: 1, width: 23, height: 16 };
-const lightSwitch = { x: room.left + 2, y: room.top + room.height - 2 };
-const doorTiles = new Set([
-  `${room.left + Math.floor(room.width / 2)},${room.top}`,
-  `${room.left + Math.floor(room.width / 2)},${room.top + room.height - 1}`,
-  `${room.left},${room.top + Math.floor(room.height / 2)}`,
-  `${room.left + room.width - 1},${room.top + Math.floor(room.height / 2)}`,
+const room = { left: 2, top: 2, width: 22, height: 14 };
+const lightSwitch = { x: room.left + 2, y: room.top + room.height - 1 };
+const doorRotations = new Map([
+  [`${room.left + Math.floor(room.width / 2)},${room.top}`, 0],
+  [`${room.left + Math.floor(room.width / 2)},${room.top + room.height - 1}`, Math.PI],
+  [`${room.left},${room.top + Math.floor(room.height / 2)}`, -Math.PI / 2],
+  [`${room.left + room.width - 1},${room.top + Math.floor(room.height / 2)}`, Math.PI / 2],
 ]);
+const doorTiles = new Set(doorRotations.keys());
 
 const pillars = new Set([
   "7,5",
   "7,6",
-  "7,10",
   "7,11",
-  "19,5",
-  "19,6",
-  "19,10",
-  "19,11",
+  "7,12",
+  "18,5",
+  "18,6",
+  "18,11",
+  "18,12",
 ]);
 
 type Direction = "up" | "down" | "left" | "right";
@@ -67,6 +68,26 @@ export function TorchRoomExperiment() {
       return insideRoom && !pillars.has(tileKey(tileX, tileY));
     }
 
+    function drawDoor(x: number, y: number) {
+      const rotation = doorRotations.get(tileKey(x, y)) ?? 0;
+      const centerX = x * tileSize + tileSize / 2;
+      const centerY = y * tileSize + tileSize / 2;
+
+      drawingContext.fillStyle = "#20191d";
+      drawingContext.fillRect(x * tileSize, y * tileSize, tileSize, tileSize);
+      drawingContext.save();
+      drawingContext.translate(centerX, centerY);
+      drawingContext.rotate(rotation);
+      drawingContext.fillStyle = "#78583d";
+      drawingContext.fillRect(-4, -5, 8, 10);
+      drawingContext.fillStyle = "#2c2020";
+      drawingContext.fillRect(-2, -3, 1, 5);
+      drawingContext.fillRect(1, -3, 1, 5);
+      drawingContext.fillStyle = "#f0bb50";
+      drawingContext.fillRect(2, 0, 1, 1);
+      drawingContext.restore();
+    }
+
     function draw(time: number) {
       drawingContext.fillStyle = "#030306";
       drawingContext.fillRect(0, 0, canvasWidth, canvasHeight);
@@ -93,15 +114,7 @@ export function TorchRoomExperiment() {
               pillars.has(tileKey(x, y)));
           if (light > 0.02) {
             if (isDoor) {
-              drawingContext.fillStyle = "#20191d";
-              drawingContext.fillRect(x * tileSize, y * tileSize, tileSize, tileSize);
-              drawingContext.fillStyle = "#78583d";
-              drawingContext.fillRect(x * tileSize + 2, y * tileSize + 1, tileSize - 4, tileSize - 2);
-              drawingContext.fillStyle = "#2c2020";
-              drawingContext.fillRect(x * tileSize + 4, y * tileSize + 3, 1, tileSize - 5);
-              drawingContext.fillRect(x * tileSize + tileSize - 5, y * tileSize + 3, 1, tileSize - 5);
-              drawingContext.fillStyle = "#f0bb50";
-              drawingContext.fillRect(x * tileSize + tileSize - 4, y * tileSize + Math.floor(tileSize / 2), 1, 1);
+              drawDoor(x, y);
             } else if (isWall) {
               const wallBrightness = Math.round(22 + light * 46);
               const wallVariation = (x * 11 + y * 23) % 3;
@@ -165,9 +178,9 @@ export function TorchRoomExperiment() {
       drawingContext.font = "7px monospace";
       drawingContext.fillText("ROOM_01", 12, 13);
       drawingContext.fillStyle = "#fdc32d";
-      drawingContext.fillText(lightsOn ? "LIGHT" : "TORCH", 252, 13);
+      drawingContext.fillText(lightsOn ? "LIGHT" : "TORCH", canvasWidth - 68, 13);
       drawingContext.fillStyle = lightsOn ? "#5edb75" : "#ff6c37";
-      drawingContext.fillRect(289, 7, 19, 5);
+      drawingContext.fillRect(canvasWidth - 31, 7, 19, 5);
     }
 
     function update(time: number) {
