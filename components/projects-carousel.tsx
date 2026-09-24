@@ -69,6 +69,19 @@ const projects = [
     labelColor: "text-[#e5e1ff]",
     accentColor: "#bdb5ff",
   },
+  {
+    number: "06",
+    title: "Finance",
+    eyebrow: "Privé · beveiligd",
+    href: "/finance",
+    description:
+      "Een rustige plek voor rekeningen, maandelijkse uitgaven en gezamenlijke spaardoelen.",
+    mutedColor: "bg-[#0e3b36]",
+    mainColor: "bg-[#19564c]",
+    textColor: "text-white",
+    labelColor: "text-[#dcebdc]",
+    accentColor: "#b7c88b",
+  },
 ];
 
 export function ProjectsCarousel() {
