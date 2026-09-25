@@ -1,4 +1,5 @@
 import { analyzeFinance, type AnalysisTransaction, type MonthResult } from "@/lib/finance/analysis";
+import { accountDefinition } from "@/lib/finance/accounts";
 
 type Account = { iban: string; kind: string };
 const euro = (cents: number) => new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR" }).format(cents / 100);
@@ -19,19 +20,19 @@ function CategoryList({ rows, empty }: { rows: [string, number][]; empty: string
 function CashflowChart({ months }: { months: MonthResult[] }) {
   const max = Math.max(1, ...months.filter((result) => result.hasData).map((result) => Math.abs(result.net)));
   const label = months.map((result) => `${monthLabel(result.month)}: ${result.hasData ? euro(result.net) : "geen gegevens"}`).join("; ");
-  return <div className="overflow-x-auto"><svg role="img" aria-label={`Netto cashflow per volledige maand. ${label}`} viewBox="0 0 600 250" className="mt-5 w-full min-w-[520px]">
-    <line x1="36" x2="565" y1="115" y2="115" stroke="#cbd8cf" strokeWidth="2" />
+  return <div className="overflow-x-auto"><svg role="img" aria-label={`Netto cashflow per volledige maand. ${label}`} viewBox="0 0 720 250" className="mt-5 w-full min-w-[720px]">
+    <line x1="36" x2="690" y1="115" y2="115" stroke="#cbd8cf" strokeWidth="2" />
     <text x="0" y="118" fill="#71877f" fontSize="12">€ 0</text>
     {months.map((result, index) => {
-      const x = 95 + index * 170;
+      const x = 64 + index * 108;
       const height = Math.max(result.net === 0 ? 3 : 8, Math.abs(result.net) / max * 75);
       const y = result.net >= 0 ? 115 - height : 115;
       return <g key={result.month}>
         {result.hasData ? <>
-          <rect x={x} y={y} width="94" height={height} rx="8" fill={result.net >= 0 ? "#75a58e" : "#d98678"} />
-          <text x={x + 47} y={result.net >= 0 ? Math.max(17, y - 10) : Math.min(208, y + height + 19)} textAnchor="middle" fill="#173a36" fontSize="14" fontWeight="600">{euro(result.net)}</text>
-        </> : <text x={x + 47} y="98" textAnchor="middle" fill="#789187" fontSize="13">Geen data</text>}
-        <text x={x + 47} y="231" textAnchor="middle" fill="#5d746d" fontSize="14">{shortMonth(result.month)}</text>
+          <rect x={x} y={y} width="64" height={height} rx="8" fill={result.net >= 0 ? "#75a58e" : "#d98678"} />
+          <text x={x + 32} y={result.net >= 0 ? Math.max(17, y - 10) : Math.min(208, y + height + 19)} textAnchor="middle" fill="#173a36" fontSize="12" fontWeight="600">{euro(result.net)}</text>
+        </> : <text x={x + 32} y="98" textAnchor="middle" fill="#789187" fontSize="12">Geen data</text>}
+        <text x={x + 32} y="231" textAnchor="middle" fill="#5d746d" fontSize="14">{shortMonth(result.month)}</text>
       </g>;
     })}
   </svg></div>;
@@ -46,19 +47,19 @@ export function FinanceInsights({ transactions, accounts }: { transactions: Anal
 
   return <>
     <section className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4" aria-label="Kerncijfers">
-      {[["Totaal saldo", result.totalBalance], ["Op spaarrekeningen", result.savingsBalance], [`Inkomsten ${shortMonth(result.observed.month)}`, result.observed.income], [`Uitgaven ${shortMonth(result.observed.month)}`, result.observed.spending]].map(([label, value]) =>
+      {[["Gezamenlijk saldo", result.totalBalance], ["Gezamenlijk sparen", result.savingsBalance], [`Inkomsten ${shortMonth(result.observed.month)}`, result.observed.income], [`Uitgaven ${shortMonth(result.observed.month)}`, result.observed.spending]].map(([label, value]) =>
         <div key={label} className="rounded-2xl border border-[#e2e8df] bg-white p-6"><p className="text-sm text-[#71877f]">{label}</p><p className="mt-3 text-3xl font-semibold tracking-tight">{euro(value as number)}</p></div>,
       )}
     </section>
     <section className="mt-4 rounded-2xl bg-[#123e37] p-7 text-white">
       <p className="text-sm text-[#bad3c5]">Netto cashflow · {monthLabel(result.observed.month)}</p>
       <p className="mt-2 text-4xl font-semibold">{euro(result.observed.net)}</p>
-      <p className="mt-3 text-xs leading-relaxed text-[#c5d8cf]">Inkomsten min uitgaven, zonder interne overboekingen. De nieuwste maand in het bestand kan nog onvolledig zijn.</p>
+      <p className="mt-3 text-xs leading-relaxed text-[#c5d8cf]">Alleen gezamenlijke rekeningen. Overboekingen tussen die twee rekeningen tellen niet mee; geld van en naar privé wel. De nieuwste maand kan nog onvolledig zijn.</p>
     </section>
     <section className="mt-8 grid gap-6 lg:grid-cols-[1.45fr_0.55fr]" aria-label="Cashflowontwikkeling">
       <div className="rounded-2xl border border-[#e2e8df] bg-white p-6">
         <h2 className="text-xl font-semibold">Netto cashflow over tijd</h2>
-        <p className="mt-1 text-sm text-[#71877f]">Laatste drie volledige kalendermaanden</p>
+        <p className="mt-1 text-sm text-[#71877f]">Laatste zes volledige kalendermaanden</p>
         <CashflowChart months={result.history} />
       </div>
       <div className="flex flex-col justify-between rounded-2xl border border-[#e2e8df] bg-white p-6">
@@ -79,11 +80,11 @@ export function FinanceInsights({ transactions, accounts }: { transactions: Anal
     </section>
     <section className="mt-8 rounded-2xl border border-[#e2e8df] bg-white p-6">
       <h2 className="text-xl font-semibold">10 grootste uitgaven</h2>
-      <p className="mt-1 text-sm text-[#71877f]">De laatste drie volledige maanden, zonder interne overboekingen</p>
+      <p className="mt-1 text-sm text-[#71877f]">De laatste zes volledige maanden, op gezamenlijke rekeningen</p>
       <ol className="mt-5 divide-y divide-[#edf1e9]">{result.largestExpenses.map((transaction, index) =>
         <li key={transaction.fingerprint} className="flex items-center gap-4 py-3 text-sm">
           <span className="w-5 shrink-0 font-mono text-xs text-[#789187]">{index + 1}</span>
-          <div className="min-w-0 flex-1"><p className="truncate font-medium">{transaction.counterparty || transaction.description || "Transactie"}</p><p className="text-xs text-[#789187]">{transaction.booked_on} · {transaction.category}</p></div>
+          <div className="min-w-0 flex-1"><p className="truncate font-medium">{accountDefinition(transaction.counterparty_iban ?? "")?.owner === "personal" ? "Overboeking naar privé" : transaction.counterparty || transaction.description || "Transactie"}</p><p className="text-xs text-[#789187]">{transaction.booked_on} · {accountDefinition(transaction.counterparty_iban ?? "")?.owner === "personal" ? "Naar privé" : transaction.category}</p></div>
           <strong className="shrink-0">{euro(transaction.amount_cents)}</strong>
         </li>,
       )}</ol>

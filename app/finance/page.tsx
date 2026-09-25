@@ -13,6 +13,7 @@ export const dynamic = "force-dynamic";
 type Transaction = {
   fingerprint: string;
   account_iban: string;
+  counterparty_iban: string | null;
   booked_on: string;
   sequence: number;
   amount_cents: number;
@@ -31,7 +32,7 @@ async function loadTransactions(client: NonNullable<Awaited<ReturnType<typeof ge
   const rows: Transaction[] = [];
   for (let offset = 0; offset < 20_000; offset += 1000) {
     const { data, error } = await client.from("finance_transactions")
-      .select("fingerprint,account_iban,booked_on,sequence,amount_cents,balance_cents,counterparty,description,category,is_internal_transfer")
+      .select("fingerprint,account_iban,counterparty_iban,booked_on,sequence,amount_cents,balance_cents,counterparty,description,category,is_internal_transfer")
       .order("booked_on", { ascending: false })
       .order("sequence", { ascending: false })
       .range(offset, offset + 999);

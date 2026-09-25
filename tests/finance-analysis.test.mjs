@@ -46,9 +46,11 @@ test("cashflow uses complete months and excludes internal transfers", () => {
     transaction("2026-09-10", 0, "personal-balance", { account_iban: personalSavings, balance_cents: 50_000 }),
   ];
   const result = analyzeFinance(rows, accounts, new Date(2026, 8, 25));
-  assert.deepEqual(result.history.map((month) => month.net), [50_000, 60_000, 70_000]);
+  assert.deepEqual(result.history.map((month) => month.net), [0, 0, 0, 50_000, 60_000, 70_000]);
+  assert.deepEqual(result.history.map((month) => month.hasData), [false, false, false, true, true, true]);
   assert.equal(result.observed.net, 10_000);
-  assert.equal(result.savingsBalance, 200_000);
+  assert.equal(result.savingsBalance, 150_000);
+  assert.equal(result.totalBalance, 250_000);
   assert.equal(result.changeCents, 10_000);
   assert.equal(Math.round(result.changePercent), 17);
   assert.equal(result.movingAverage, 60_000);
@@ -62,4 +64,19 @@ test("missing months are not treated as zero and zero baseline has no percentage
   assert.equal(result.history[0].hasData, false);
   assert.equal(result.changeCents, null);
   assert.equal(result.movingAverage, null);
+});
+
+test("personal accounts are hidden, but transfers with joint accounts count as joint cashflow", () => {
+  const rows = [
+    transaction("2026-09-05", -30_000, "joint-to-personal", { counterparty_iban: personalSavings, is_internal_transfer: true }),
+    transaction("2026-09-06", 50_000, "personal-to-joint", { counterparty_iban: personalSavings, is_internal_transfer: true }),
+    transaction("2026-09-06", 30_000, "personal-mirror", { account_iban: personalSavings, counterparty_iban: current, is_internal_transfer: true, balance_cents: 800_000 }),
+    transaction("2026-09-07", -5_000, "joint-to-joint", { counterparty_iban: sharedSavings, is_internal_transfer: true }),
+  ];
+  const result = analyzeFinance(rows, accounts, new Date(2026, 8, 25));
+  assert.equal(result.observed.net, 20_000);
+  assert.equal(result.totalBalance, 100_000);
+  assert.equal(result.savingsBalance, 0);
+  assert.deepEqual(result.incomeCategories, [["Van privé", 50_000]]);
+  assert.deepEqual(result.spendingCategories, [["Naar privé", 30_000]]);
 });

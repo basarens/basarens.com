@@ -44,13 +44,13 @@ function incomeCategory(transaction: AnalysisTransaction) {
 }
 
 export function analyzeFinance(transactions: AnalysisTransaction[], accounts: AnalysisAccount[], now = new Date()) {
-  const sorted = [...transactions].sort(
+  const sorted = transactions.filter((transaction) => accountDefinition(transaction.account_iban)?.owner === "shared").sort(
     (a, b) => b.booked_on.localeCompare(a.booked_on) || b.sequence - a.sequence,
   );
-  const knownIbans = new Set(accounts.map((account) => account.iban));
   const external = sorted.filter((transaction) =>
-    !transaction.is_internal_transfer &&
-    !(transaction.counterparty_iban && knownIbans.has(transaction.counterparty_iban)),
+    transaction.counterparty_iban
+      ? accountDefinition(transaction.counterparty_iban)?.owner !== "shared"
+      : !transaction.is_internal_transfer,
   );
   const latestBalance = new Map<string, number>();
   for (const transaction of sorted) {
@@ -60,7 +60,7 @@ export function analyzeFinance(transactions: AnalysisTransaction[], accounts: An
   }
   const totalBalance = [...latestBalance.values()].reduce((sum, value) => sum + value, 0);
   const savingsBalance = accounts.reduce((sum, account) =>
-    sum + ((accountDefinition(account.iban)?.kind ?? account.kind) === "savings"
+    sum + (accountDefinition(account.iban)?.owner === "shared" && accountDefinition(account.iban)?.kind === "savings"
       ? latestBalance.get(account.iban) ?? 0
       : 0), 0);
 
@@ -77,14 +77,14 @@ export function analyzeFinance(transactions: AnalysisTransaction[], accounts: An
   }
 
   const observed = summarize(observedMonth);
-  const history = [2, 1, 0].map((offset) => summarize(monthBefore(lastCompleteMonth, offset)));
-  const [older, previous, latest] = history;
+  const history = [5, 4, 3, 2, 1, 0].map((offset) => summarize(monthBefore(lastCompleteMonth, offset)));
+  const [older, previous, latest] = history.slice(-3);
   const comparable = previous.hasData && latest.hasData;
   const changeCents = comparable ? latest.net - previous.net : null;
   const changePercent = comparable && previous.net !== 0
     ? ((latest.net - previous.net) / Math.abs(previous.net)) * 100
     : null;
-  const completeMonths = history.filter((result) => result.hasData);
+  const completeMonths = history.slice(-3).filter((result) => result.hasData);
   const movingAverage = completeMonths.length === 3
     ? Math.round(completeMonths.reduce((sum, result) => sum + result.net, 0) / 3)
     : null;
@@ -93,7 +93,9 @@ export function analyzeFinance(transactions: AnalysisTransaction[], accounts: An
     transaction.booked_on.startsWith(observedMonth) && transaction.amount_cents < 0,
   );
   const spendingCategories = Object.entries(observedExpenses.reduce<Record<string, number>>((result, transaction) => {
-    result[transaction.category] = (result[transaction.category] ?? 0) - transaction.amount_cents;
+    const category = transaction.counterparty_iban && accountDefinition(transaction.counterparty_iban)?.owner === "personal"
+      ? "Naar privé" : transaction.category;
+    result[category] = (result[category] ?? 0) - transaction.amount_cents;
     return result;
   }, {})).sort((a, b) => b[1] - a[1]);
 
@@ -101,7 +103,8 @@ export function analyzeFinance(transactions: AnalysisTransaction[], accounts: An
     transaction.booked_on.startsWith(observedMonth) && transaction.amount_cents > 0,
   );
   const incomeCategories = Object.entries(observedIncome.reduce<Record<string, number>>((result, transaction) => {
-    const category = incomeCategory(transaction);
+    const category = transaction.counterparty_iban && accountDefinition(transaction.counterparty_iban)?.owner === "personal"
+      ? "Van privé" : incomeCategory(transaction);
     result[category] = (result[category] ?? 0) + transaction.amount_cents;
     return result;
   }, {})).sort((a, b) => b[1] - a[1]);

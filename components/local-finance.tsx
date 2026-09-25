@@ -167,7 +167,7 @@ export function LocalFinance() {
           </div>
         </header>
         <div className="mt-10">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#789187]">Privé op dit apparaat</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#789187]">Gezamenlijk overzicht · privé op dit apparaat</p>
           <h1 className="mt-2 text-4xl font-semibold tracking-tight">Goed zicht op jullie geld.</h1>
         </div>
         <FinanceInsights transactions={data.transactions} accounts={data.accounts} />
