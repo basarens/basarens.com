@@ -80,7 +80,7 @@ export function FinanceInsights({ transactions, accounts }: { transactions: Anal
     </section>
     <section className="mt-8 rounded-2xl border border-[#e2e8df] bg-white p-6">
       <h2 className="text-xl font-semibold">10 grootste uitgaven</h2>
-      <p className="mt-1 text-sm text-[#71877f]">De laatste zes volledige maanden, op gezamenlijke rekeningen</p>
+      <p className="mt-1 text-sm text-[#71877f]">De laatste twee volledige maanden, op gezamenlijke rekeningen, zonder Drienerbrug B.V. (huur)</p>
       <ol className="mt-5 divide-y divide-[#edf1e9]">{result.largestExpenses.map((transaction, index) =>
         <li key={transaction.fingerprint} className="flex items-center gap-4 py-3 text-sm">
           <span className="w-5 shrink-0 font-mono text-xs text-[#789187]">{index + 1}</span>

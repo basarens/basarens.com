@@ -109,9 +109,13 @@ export function analyzeFinance(transactions: AnalysisTransaction[], accounts: An
     return result;
   }, {})).sort((a, b) => b[1] - a[1]);
 
-  const historyMonths = new Set(history.map((result) => result.month));
+  const highlightMonths = new Set(history.slice(-2).map((result) => result.month));
   const largestExpenses = external
-    .filter((transaction) => historyMonths.has(transaction.booked_on.slice(0, 7)) && transaction.amount_cents < 0)
+    .filter((transaction) =>
+      highlightMonths.has(transaction.booked_on.slice(0, 7)) &&
+      transaction.amount_cents < 0 &&
+      !/drienerbrugbv/.test(`${transaction.counterparty ?? ""} ${transaction.description}`.toLowerCase().replace(/[^a-z0-9]/g, "")),
+    )
     .sort((a, b) => a.amount_cents - b.amount_cents)
     .slice(0, 10);
 

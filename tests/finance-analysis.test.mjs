@@ -55,7 +55,7 @@ test("cashflow uses complete months and excludes internal transfers", () => {
   assert.equal(Math.round(result.changePercent), 17);
   assert.equal(result.movingAverage, 60_000);
   assert.deepEqual(result.incomeCategories, [["Salaris", 20_000]]);
-  assert.equal(result.largestExpenses.length, 3);
+  assert.equal(result.largestExpenses.length, 2);
 });
 
 test("missing months are not treated as zero and zero baseline has no percentage", () => {
@@ -79,4 +79,17 @@ test("personal accounts are hidden, but transfers with joint accounts count as j
   assert.equal(result.savingsBalance, 0);
   assert.deepEqual(result.incomeCategories, [["Van privé", 50_000]]);
   assert.deepEqual(result.spendingCategories, [["Naar privé", 30_000]]);
+});
+
+test("top expenses use the last two complete months and omit Drienerbrug rent", () => {
+  const rows = [
+    transaction("2026-06-10", -200_000, "old-expense"),
+    transaction("2026-07-10", -20_000, "july-expense"),
+    transaction("2026-08-10", -100_000, "rent", { counterparty: "Drienerbrug B.V.", description: "Huur augustus" }),
+    transaction("2026-08-12", -30_000, "august-expense"),
+    transaction("2026-09-10", -150_000, "current-month-expense"),
+  ];
+  const result = analyzeFinance(rows, accounts, new Date(2026, 8, 25));
+  assert.deepEqual(result.largestExpenses.map((row) => row.fingerprint), ["august-expense", "july-expense"]);
+  assert.equal(result.history.at(-1).net, -130_000);
 });
