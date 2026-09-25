@@ -12,8 +12,8 @@ Wanneer de Supabase-variabelen worden ingevuld, schakelt de module over naar het
 2. Voer [supabase/finance.sql](supabase/finance.sql) uit in de SQL Editor. Voeg daarna de twee Auth-user-ID's toe met de `insert into public.finance_members`-regel onderaan dat bestand.
 3. Zet de project-URL en **publishable key** in `.env.local` en in de Vercel-omgevingsvariabelen, volgens `.env.example`. Gebruik hier nooit een service role of secret key.
 4. Start of herstart de site. Log in op `/finance`. Importeer de ING-export met de vier rekeningen als CSV of XLSX. Het originele bestand wordt alleen in het geheugen gelezen; alleen genormaliseerde transacties gaan naar de database.
-5. Stel onder **Rekeningen** per rekening in of die gezamenlijk of persoonlijk is en of het een lopende of spaarrekening is. Pas daarna klopt het spaaroverzicht.
+5. De vier bekende rekeningen zijn vooraf ingedeeld als gezamenlijk of persoonlijk en als lopend of sparen. Ook bestaande lokale imports krijgen die indeling zodra de kluis opnieuw wordt geopend.
 
 Bij een herhaalde import worden transacties op basis van een vingerafdruk overgeslagen. Interne overboekingen worden herkend wanneer beide rekeningnummers in dezelfde import staan. Importeer dus eerst een export met alle vier rekeningen. Categorieën zijn voorlopige regels; de post **Overig** vraagt handmatige controle voordat je uitgavenadvies gebruikt.
 
-De pagina geeft voorlopig geen beleggingsadvies of automatisch vrij besteedbaar bedrag. Daarvoor zijn betrouwbare categorieën, vaste lasten en doelbedragen nodig.
+De cashflowgrafiek gebruikt de laatste drie volledige kalendermaanden. De procentuele verandering vergelijkt de twee recentste volledige maanden; ontbrekende maanden worden niet als € 0 behandeld. Inkomsten en uitgaven per categorie zijn voorlopige schattingen. De top 10 toont de grootste externe uitgaven in de drie volledige maanden. De pagina geeft voorlopig geen beleggingsadvies of automatisch vrij besteedbaar bedrag. Daarvoor zijn betrouwbare categorieën, vaste lasten en doelbedragen nodig.

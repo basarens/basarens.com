@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
+import { accountDefinition, namedAccount } from "@/lib/finance/accounts";
+import { FinanceInsights } from "@/components/finance-insights";
 import { parseBankFile } from "@/lib/finance/import";
 import {
   createLocalFinance,
@@ -14,6 +16,10 @@ import {
 } from "@/lib/finance/local-vault";
 
 const euro = (value: number) => new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR" }).format(value / 100);
+
+function applyFixedAccounts(data: LocalFinanceData): LocalFinanceData {
+  return { ...data, accounts: data.accounts.map(namedAccount) };
+}
 
 export function LocalFinance() {
   const [loading, setLoading] = useState(true);
@@ -46,7 +52,14 @@ export function LocalFinance() {
     setBusy(true);
     try {
       const opened = await unlockLocalFinance(password, vault);
-      setKey(opened.key); setData(opened.data); setPassword(""); setMessage("");
+      const normalized = applyFixedAccounts(opened.data);
+      const changed = normalized.accounts.some((account, index) =>
+        account.label !== opened.data.accounts[index].label ||
+        account.kind !== opened.data.accounts[index].kind ||
+        account.owner !== opened.data.accounts[index].owner,
+      );
+      const envelope = changed ? await saveLocalFinance(opened.key, normalized, vault.salt) : vault;
+      setVault(envelope); setKey(opened.key); setData(normalized); setPassword(""); setMessage("");
     } catch (error) { setMessage((error as Error).message); }
     finally { setBusy(false); }
   }
@@ -67,7 +80,13 @@ export function LocalFinance() {
       const known = new Set(data.accounts.map((account) => account.iban));
       const accounts = [...data.accounts];
       for (const iban of imported.accounts) if (!known.has(iban)) {
-        accounts.push({ iban, label: `Rekening •••• ${iban.slice(-4)}`, kind: "current", owner: "shared" });
+        const definition = accountDefinition(iban);
+        accounts.push({
+          iban,
+          label: definition?.label ?? `Rekening •••• ${iban.slice(-4)}`,
+          kind: definition?.kind ?? "current",
+          owner: definition?.owner ?? "shared",
+        });
         known.add(iban);
       }
       const fingerprints = new Set(data.transactions.map((transaction) => transaction.fingerprint));
@@ -75,17 +94,10 @@ export function LocalFinance() {
       const transactions = [...data.transactions, ...added]
         .map((transaction) => ({ ...transaction, is_internal_transfer: Boolean(transaction.counterparty_iban && known.has(transaction.counterparty_iban)) }))
         .sort((a, b) => b.booked_on.localeCompare(a.booked_on) || b.sequence - a.sequence);
-      await persist({ ...data, accounts, transactions });
+      await persist({ ...data, accounts: accounts.map(namedAccount), transactions });
       setMessage(`${added.length} nieuwe transacties opgeslagen. ${imported.transactions.length - added.length} dubbelen overgeslagen.`);
     } catch (error) { setMessage((error as Error).message); }
     finally { setBusy(false); input.value = ""; }
-  }
-
-  async function updateAccount(iban: string, field: "kind" | "owner", value: string) {
-    if (!data) return;
-    const accounts = data.accounts.map((account) => account.iban === iban ? { ...account, [field]: value } : account);
-    try { await persist({ ...data, accounts: accounts as LocalFinanceData["accounts"] }); }
-    catch (error) { setMessage((error as Error).message); }
   }
 
   async function addGoal(event: FormEvent<HTMLFormElement>) {
@@ -119,7 +131,9 @@ export function LocalFinance() {
     try {
       const envelope = JSON.parse(await file.text()) as VaultEnvelope;
       const opened = await restoreLocalFinance(envelope, password);
-      setVault(envelope); setKey(opened.key); setData(opened.data); setPassword(""); setMessage("Back-up hersteld.");
+      const normalized = applyFixedAccounts(opened.data);
+      const saved = await saveLocalFinance(opened.key, normalized, envelope.salt);
+      setVault(saved); setKey(opened.key); setData(normalized); setPassword(""); setMessage("Back-up hersteld.");
     } catch (error) { setMessage((error as Error).message); }
     finally { setBusy(false); event.target.value = ""; }
   }
@@ -139,28 +153,47 @@ export function LocalFinance() {
       </div></div></main>
   );
 
-  const latest = new Map<string, number>();
-  for (const transaction of data.transactions) if (!latest.has(transaction.account_iban) && transaction.balance_cents !== null) latest.set(transaction.account_iban, transaction.balance_cents);
-  const total = [...latest.values()].reduce((sum, amount) => sum + amount, 0);
-  const savings = data.accounts.filter((account) => account.kind === "savings").reduce((sum, account) => sum + (latest.get(account.iban) ?? 0), 0);
-  const month = data.transactions[0]?.booked_on.slice(0, 7) ?? new Date().toISOString().slice(0, 7);
-  const monthTransactions = data.transactions.filter((transaction) => transaction.booked_on.startsWith(month) && !transaction.is_internal_transfer);
-  const income = monthTransactions.filter((transaction) => transaction.amount_cents > 0).reduce((sum, transaction) => sum + transaction.amount_cents, 0);
-  const spending = -monthTransactions.filter((transaction) => transaction.amount_cents < 0).reduce((sum, transaction) => sum + transaction.amount_cents, 0);
-  const categories = Object.entries(monthTransactions.filter((transaction) => transaction.amount_cents < 0).reduce<Record<string, number>>((result, transaction) => {
-    result[transaction.category] = (result[transaction.category] ?? 0) - transaction.amount_cents;
-    return result;
-  }, {})).sort((a, b) => b[1] - a[1]);
-
-  return <main className="min-h-screen bg-[#f5f6f2] text-[#173a36]"><div className="mx-auto max-w-6xl px-5 py-7 sm:px-9">
-    <header className="flex flex-wrap items-center justify-between gap-4 border-b border-[#dfe6dc] pb-6"><div><Link href="/" className="text-xs text-[#6c877e]">← basarens.com</Link><p className="mt-2 text-2xl font-semibold">Finance<span className="text-[#b7c88b]">.</span></p></div><div className="flex flex-wrap gap-2"><button onClick={downloadBackup} className="rounded-full border border-[#ccdbd0] px-4 py-2 text-sm">Download back-up</button><button onClick={() => { setKey(null); setData(null); setMessage(""); }} className="rounded-full border border-[#ccdbd0] px-4 py-2 text-sm">Vergrendel</button></div></header>
-    <div className="mt-10"><p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#789187]">Privé op dit apparaat</p><h1 className="mt-2 text-4xl font-semibold tracking-tight">Goed zicht op jullie geld.</h1><p className="mt-2 text-sm text-[#71877f]">Laatste maand in je bestand: {month}. Deze maand kan nog onvolledig zijn.</p></div>
-    <section className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">{[["Totaal saldo", total], ["Op spaarrekeningen", savings], ["Inkomsten deze maand", income], ["Uitgaven deze maand", spending]].map(([label, value]) => <div key={label} className="rounded-2xl border border-[#e2e8df] bg-white p-6"><p className="text-sm text-[#71877f]">{label}</p><p className="mt-3 text-3xl font-semibold">{euro(value as number)}</p></div>)}</section>
-    <div className="mt-4 rounded-2xl bg-[#123e37] p-7 text-white"><p className="text-sm text-[#bad3c5]">Netto cashflow deze maand</p><p className="mt-2 text-4xl font-semibold">{euro(income - spending)}</p><p className="mt-3 text-xs text-[#c5d8cf]">Overboekingen tussen jullie geïmporteerde rekeningen tellen niet mee.</p></div>
-    <div className="mt-8 grid gap-6 lg:grid-cols-2"><section className="rounded-2xl border border-[#e2e8df] bg-white p-6"><h2 className="text-xl font-semibold">Uitgaven per categorie</h2><div className="mt-5 space-y-3">{categories.map(([label, amount]) => <div key={label} className="flex justify-between gap-3 text-sm"><span>{label}</span><strong>{euro(amount)}</strong></div>)}</div>{!categories.length && <p className="mt-5 text-sm text-[#789187]">Importeer een bankbestand om de verdeling te zien.</p>}<p className="mt-5 text-xs text-[#789187]">Categorieën zijn schattingen. Controleer vooral ‘Overig’.</p></section>
-      <section className="rounded-2xl border border-[#e2e8df] bg-white p-6"><h2 className="text-xl font-semibold">Rekeningen</h2><div className="mt-5 space-y-4">{data.accounts.map((account) => <div key={account.iban} className="border-b border-[#edf1e9] pb-4"><div className="flex justify-between gap-3 text-sm"><span>{account.label}</span><strong>{euro(latest.get(account.iban) ?? 0)}</strong></div><div className="mt-2 flex gap-2"><select value={account.owner} onChange={(event) => updateAccount(account.iban, "owner", event.target.value)} aria-label="Eigenaar" className="rounded-lg border border-[#e2e8df] px-2 py-1 text-xs"><option value="shared">Gezamenlijk</option><option value="personal">Persoonlijk</option></select><select value={account.kind} onChange={(event) => updateAccount(account.iban, "kind", event.target.value)} aria-label="Type rekening" className="rounded-lg border border-[#e2e8df] px-2 py-1 text-xs"><option value="current">Lopend</option><option value="savings">Sparen</option></select></div></div>)}</div>{!data.accounts.length && <p className="mt-5 text-sm text-[#789187]">Nog geen rekeningen.</p>}</section></div>
-    <section className="mt-8 rounded-2xl border border-[#e2e8df] bg-white p-6"><h2 className="text-xl font-semibold">Spaardoelen</h2><div className="mt-5 grid gap-3 sm:grid-cols-2">{data.goals.map((goal) => <div key={goal.id} className="rounded-xl bg-[#f5f7f2] p-4"><p className="font-medium">{goal.label}</p><p className="mt-1 text-sm text-[#71877f]">Doel: {euro(goal.target_cents)}</p></div>)}</div><form onSubmit={addGoal} className="mt-5 flex flex-wrap gap-2"><input name="label" placeholder="Nieuw doel" aria-label="Naam spaardoel" required maxLength={80} className="min-w-0 flex-1 rounded-xl border border-[#e2e8df] px-3 py-2 text-sm" /><input name="target" placeholder="Bedrag in €" aria-label="Doelbedrag" required inputMode="decimal" className="w-36 rounded-xl border border-[#e2e8df] px-3 py-2 text-sm" /><button className="rounded-xl bg-[#dbe9d9] px-4 py-2 text-sm font-medium">Doel toevoegen</button></form></section>
-    <section className="mt-8 rounded-2xl border border-[#e2e8df] bg-white p-6"><h2 className="text-xl font-semibold">Bankbestand importeren</h2><p className="mt-2 mb-5 text-sm text-[#71877f]">Gebruik een CSV- of XLSX-export. Het bestand wordt in deze browser verwerkt en niet naar de server gestuurd.</p><input type="file" accept=".csv,.xlsx" aria-label="Bankbestand importeren" onChange={importFile} disabled={busy} className="block w-full text-sm" />{message && <p role="status" className="mt-4 text-sm text-[#355c50]">{message}</p>}</section>
-    <section className="mt-8 rounded-2xl border border-[#e2e8df] bg-white p-6"><h2 className="text-xl font-semibold">Recente transacties</h2><div className="mt-5 divide-y divide-[#edf1e9]">{data.transactions.slice(0, 20).map((transaction) => <div key={transaction.fingerprint} className="flex justify-between gap-4 py-3 text-sm"><div className="min-w-0"><p className="truncate font-medium">{transaction.counterparty || transaction.description || "Transactie"}</p><p className="text-xs text-[#789187]">{transaction.booked_on} · {transaction.is_internal_transfer ? "Interne overboeking" : transaction.category}</p></div><strong>{euro(transaction.amount_cents)}</strong></div>)}</div></section>
-  </div></main>;
+  return (
+    <main className="min-h-screen bg-[#f5f6f2] text-[#173a36]">
+      <div className="mx-auto max-w-6xl px-5 py-7 sm:px-9">
+        <header className="flex flex-wrap items-center justify-between gap-4 border-b border-[#dfe6dc] pb-6">
+          <div>
+            <Link href="/" className="text-xs text-[#6c877e]">← basarens.com</Link>
+            <p className="mt-2 text-2xl font-semibold">Finance<span className="text-[#b7c88b]">.</span></p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <button onClick={downloadBackup} className="rounded-full border border-[#ccdbd0] px-4 py-2 text-sm">Download back-up</button>
+            <button onClick={() => { setKey(null); setData(null); setMessage(""); }} className="rounded-full border border-[#ccdbd0] px-4 py-2 text-sm">Vergrendel</button>
+          </div>
+        </header>
+        <div className="mt-10">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#789187]">Privé op dit apparaat</p>
+          <h1 className="mt-2 text-4xl font-semibold tracking-tight">Goed zicht op jullie geld.</h1>
+        </div>
+        <FinanceInsights transactions={data.transactions} accounts={data.accounts} />
+        <section className="mt-8 rounded-2xl border border-[#e2e8df] bg-white p-6">
+          <h2 className="text-xl font-semibold">Spaardoelen</h2>
+          <div className="mt-5 grid gap-3 sm:grid-cols-2">
+            {data.goals.map((goal) => (
+              <div key={goal.id} className="rounded-xl bg-[#f5f7f2] p-4">
+                <p className="font-medium">{goal.label}</p>
+                <p className="mt-1 text-sm text-[#71877f]">Doel: {euro(goal.target_cents)}</p>
+              </div>
+            ))}
+          </div>
+          <form onSubmit={addGoal} className="mt-5 flex flex-wrap gap-2">
+            <input name="label" placeholder="Nieuw doel" aria-label="Naam spaardoel" required maxLength={80} className="min-w-0 flex-1 rounded-xl border border-[#e2e8df] px-3 py-2 text-sm" />
+            <input name="target" placeholder="Bedrag in €" aria-label="Doelbedrag" required inputMode="decimal" className="w-36 rounded-xl border border-[#e2e8df] px-3 py-2 text-sm" />
+            <button className="rounded-xl bg-[#dbe9d9] px-4 py-2 text-sm font-medium">Doel toevoegen</button>
+          </form>
+        </section>
+        <section className="mt-8 rounded-2xl border border-[#e2e8df] bg-white p-6">
+          <h2 className="text-xl font-semibold">Bankbestand importeren</h2>
+          <p className="mt-2 mb-5 text-sm text-[#71877f]">Gebruik een CSV- of XLSX-export. Het bestand wordt in deze browser verwerkt en niet naar de server gestuurd.</p>
+          <input type="file" accept=".csv,.xlsx" aria-label="Bankbestand importeren" onChange={importFile} disabled={busy} className="block w-full text-sm" />
+          {message && <p role="status" className="mt-4 text-sm text-[#355c50]">{message}</p>}
+        </section>
+      </div>
+    </main>
+  );
 }

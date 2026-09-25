@@ -9,7 +9,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test:finance": "node --experimental-strip-types --test tests/finance-vault.test.mjs"
+    "test:finance": "node --experimental-strip-types --test tests/finance-*.test.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",

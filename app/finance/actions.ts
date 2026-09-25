@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createFinanceClient, financeConfigured, getFinanceAccess } from "@/lib/finance/supabase";
 import { parseBankFile } from "@/lib/finance/import";
+import { accountDefinition } from "@/lib/finance/accounts";
 
 export type FinanceFormState = { message: string; success?: boolean };
 
@@ -46,7 +47,15 @@ export async function importFinanceFile(
   try {
     const { transactions, accounts } = await parseBankFile(file);
     const { error: accountError } = await access.client.from("finance_accounts").upsert(
-      accounts.map((iban) => ({ iban, label: `Rekening •••• ${iban.slice(-4)}` })),
+      accounts.map((iban) => {
+        const definition = accountDefinition(iban);
+        return {
+          iban,
+          label: definition?.label ?? `Rekening •••• ${iban.slice(-4)}`,
+          kind: definition?.kind ?? "current",
+          owner: definition?.owner ?? "shared",
+        };
+      }),
       { onConflict: "iban", ignoreDuplicates: true },
     );
     if (accountError) throw accountError;
@@ -67,20 +76,6 @@ export async function importFinanceFile(
       ? error.message
       : "Importeren is niet gelukt. Controleer de database-inrichting en het bankbestand." };
   }
-}
-
-export async function saveFinanceAccount(form: FormData) {
-  const access = await getFinanceAccess();
-  if (!access) throw new Error("Geen toegang");
-  const iban = String(form.get("iban") ?? "");
-  const kind = String(form.get("kind") ?? "");
-  const owner = String(form.get("owner") ?? "");
-  if (!/^[A-Z0-9]{8,34}$/.test(iban) || !["current", "savings"].includes(kind) || !["shared", "personal"].includes(owner)) {
-    throw new Error("Ongeldige rekeninginstelling");
-  }
-  const { error } = await access.client.from("finance_accounts").update({ kind, owner }).eq("iban", iban);
-  if (error) throw new Error("Rekening kon niet worden bijgewerkt");
-  revalidatePath("/finance");
 }
 
 export async function saveFinanceGoal(form: FormData) {
