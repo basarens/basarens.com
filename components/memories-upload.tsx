@@ -110,7 +110,6 @@ export function MemoriesUpload({ token, configured, featuredVideoUrl, featuredPh
             <div className={styles.backCard} aria-hidden="true">
               {/* eslint-disable-next-line @next/next/no-img-element -- Keep the private signed photo outside the shared image optimization cache. */}
               {featuredPhotoUrl && <img className={styles.featuredPhoto} src={featuredPhotoUrl} alt="" />}
-              <span className={styles.backCaption}>Dit leek toen een goed idee.</span>
             </div>
             <figure className={styles.frontCard}>
               {featuredVideoUrl ? (
