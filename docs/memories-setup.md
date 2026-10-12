@@ -39,3 +39,15 @@ Voeg vrienden alleen na expliciete toestemming toe. Geef de eigenaar de rol owne
 ## Verwijderstemmen
 Voer supabase/memories-removal-votes.sql uit. Twee actieve, verschillende accounts stemmen een foto naar de prullenbak. Dezelfde account telt maar eenmaal en kan een stem intrekken zolang de foto zichtbaar is. De bewerking vergrendelt de foto tijdens stemmen en herstellen, zodat gelijktijdige stemmen goed tellen. Alleen de eigenaar ziet de prullenbak, kan de originele bestanden daarvan ophalen en terugzetten; herstellen wist de stemmen. Bestanden blijven privaat bewaard en worden niet fysiek gewist. Eerder geladen beelden kunnen nog op een toestel staan.
 
+
+## Maandelijkse herinneringsmails
+Voer supabase/memories-monthly-mail.sql uit. Alleen expliciet goedgekeurde accounts worden in memories_mail_preferences ingeschreven; nieuwe accounts starten zonder abonnement. Iedere vriend kan de eigen instelling in het archief wijzigen of via de afmeldlink uitzetten. Een GET op een afmeldlink verandert niets, zodat mail-scanners geen abonnementen beëindigen.
+
+Stel MEMORIES_RESEND_API_KEY in als server-only Production-variabele: Sending access, alleen basarens.com. Stel CRON_SECRET in op minstens 32 willekeurige tekens. Zonder beide sleutels is de verzending niet actief. Vercel roept de beveiligde route dagelijks rond 08:00 UTC aan; alleen op de eerste zeven dagen van de maand wordt de maandselectie verwerkt. De datum wordt in Europe/Amsterdam bepaald. Er wordt maximaal eenmaal per account en maand verzonden, en alleen als geschikte foto's bestaan.
+
+Selectie: complete, niet-verwijderde foto's met bekende maand en een eerder jaar. Foto's met een verwijderstem worden overgeslagen. Maximaal vier kleine JPEG-beelden van 640 bij 480 pixels en maximaal 200 KB per beeld, zonder EXIF, worden ingebed via CID. Unsupported of beschadigde originelen worden overgeslagen. Elke ontvanger krijgt een eigen bericht en afmeldlink. Eerder gemailde afbeeldingen blijven in de mailbox, ook als een foto later wordt verwijderd.
+
+memories_mail_deliveries reserveert de exacte mailinhoud en vergrendelt de verzending per periode/account. Voor verzending worden toegang, abonnement en foto's opnieuw gecontroleerd. Resend ontvangt een vaste idempotency key. Na geaccepteerde verzending wordt de opgeslagen mailinhoud gewist. Bij onbekende acceptatie (netwerkprobleem of afgebroken uitvoering) volgt state uncertain; controleer de Resend-bezorging voordat je handmatig herstel uitvoert. Een uncertain of sent bericht wordt niet automatisch opnieuw verstuurd. Bekende afwijzingen kunnen binnen de eerste week opnieuw worden geprobeerd.
+
+Alle tabellen en RPC's zijn alleen voor de server toegankelijk. /api/memories/monthly/preview toont alleen aan de eigenaar de huidige voorbeeldmail en verzendt niets. /api/memories/monthly vereist CRON_SECRET; een gebruikerssessie alleen is onvoldoende.
+
