@@ -1,4 +1,9 @@
 export const MAX_PHOTO_BYTES = 20 * 1024 * 1024;
+export function archiveSearchFilter(search: string) {
+  const pattern = `%${search.replace(/[\\%_]/g, (character) => `\\${character}`)}%`;
+  const value = JSON.stringify(pattern);
+  return `name.ilike.${value},message.ilike.${value}`;
+}
 export const PHOTO_TYPES: Record<string, string> = {
   "image/jpeg": "jpg",
   "image/png": "png",

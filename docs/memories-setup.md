@@ -16,6 +16,8 @@ Zonder configuratie slaat de pagina niets op en geeft dat duidelijk aan. Ongeldi
 
 ## Gedrag en beheer
 
+- Het uploadformulier staat boven het fotoarchief. De zoekbalk doorzoekt alle bevestigde foto’s op een deel van de context of fotograaf, zonder onderscheid tussen hoofdletters en kleine letters. Zoekresultaten worden op de server gefilterd vóór paginering; ook foto’s die nog niet geladen waren worden gevonden. Typen start het zoeken na 250 ms. Met ‘Wis zoekopdracht’ verschijnt het volledige archief weer.
+
 - Tik of klik op een foto om de kaart om te draaien. Op de achterkant kun je de context en fotograaf bekijken, aanpassen en opslaan. Iedereen met een geldige link heeft dezelfde bewerkrechten. De velden fotograaf en context gebruiken de bestaande kolommen `name` en `message`; er is geen database-migratie nodig. Nieuwe inzendingen nemen aanvankelijk de opgegeven naam over als fotograaf. De inzenddatum en originele foto veranderen niet. Bij gelijktijdig bewerken wordt een verouderde wijziging geweigerd; de gebruiker kan de nieuwste context bekijken voordat die opnieuw aanpast. Er is geen versiegeschiedenis.
 - Controle: `node --test tests/memories-upload.test.mjs`. Voor een echte test met één tijdelijke foto: `node scripts/verify-memories.mjs`, of `node scripts/verify-memories.mjs --live` voor www.basarens.com. Deze test wijzigt uitsluitend zijn eigen testrecord en ruimt foto en record daarna op.
 

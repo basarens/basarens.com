@@ -121,7 +121,6 @@ export function MemoriesUpload({ token, configured, featuredVideoUrl }: { token:
             </figure>
           </div>
         </section>
-        <MemoriesArchive token={token} revision={archiveRevision} />
         <section className={styles.panel} aria-labelledby="upload-title">
           <div className={styles.panelHeading}><div><p className={styles.eyebrow}>Tijd om je camerarol door te spitten</p><h2 id="upload-title">Heb jij nog bewijsmateriaal?</h2></div><span>Geen account nodig</span></div>
           {!configured && <p className={styles.warning} role="status">Het insturen staat nog niet aan. Je kunt alvast foto’s kiezen, maar ze worden nog niet opgeslagen. Kom later terug om ze te versturen.</p>}
@@ -137,6 +136,7 @@ export function MemoriesUpload({ token, configured, featuredVideoUrl }: { token:
           <p className={styles.notice} role="status" aria-live="polite">{notice}</p>
           {sent > 0 && !waiting && <button className={styles.more} type="button" onClick={() => { setPhotos([]); setMessage(""); setNotice(""); inputRef.current?.click(); }}>Er is meer bewijsmateriaal</button>}
         </section>
+        <MemoriesArchive token={token} revision={archiveRevision} />
         <footer className={styles.footer}><span>Goed gezelschap. Matige beslissingen.</span><span>Het archief van Bas · basarens.com</span></footer>
       </div>
     </main>

@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { MAX_PHOTO_BYTES, PHOTO_TYPES, validPhoto } from "@/lib/memories/files";
+import { archiveSearchFilter, MAX_PHOTO_BYTES, PHOTO_TYPES, validPhoto } from "@/lib/memories/files";
 import { MEMORIES_BUCKET, memoriesClient, memoriesConfigured, memoriesLinkHash, validMemoriesToken } from "@/lib/memories/server";
 
 export const runtime = "nodejs";
@@ -15,15 +15,19 @@ export async function GET(request: Request) {
   const offsetText = new URL(request.url).searchParams.get("offset") ?? "0";
   if (!/^\d{1,8}$/.test(offsetText)) return reply({ error: "Ongeldige archiefpagina." }, 400);
   const offset = Number(offsetText);
+  const search = (new URL(request.url).searchParams.get("search") ?? "").trim();
+  if (search.length > 100) return reply({ error: "Gebruik maximaal 100 tekens om te zoeken." }, 400);
   try {
     const client = memoriesClient();
     const { data: bucket, error: bucketError } = await client.storage.getBucket(MEMORIES_BUCKET);
     if (bucketError || !bucket || bucket.public) return reply({ error: "Het fotoarchief is tijdelijk niet beschikbaar." }, 503);
     // The current invitation grants access to the entire completed archive,
     // including photos sent through previous invitations. Never show pending uploads.
-    const { data: rows, count, error } = await client.from("memories_uploads")
+    let query = client.from("memories_uploads")
       .select("id,path,filename,name,message,created_at", { count: "exact" })
-      .eq("status", "complete").order("created_at", { ascending: false })
+      .eq("status", "complete");
+    if (search) query = query.or(archiveSearchFilter(search));
+    const { data: rows, count, error } = await query.order("created_at", { ascending: false })
       .order("id", { ascending: false }).range(offset, offset + 23);
     if (error || !rows) return reply({ error: "Het archief kon niet worden geladen. Probeer opnieuw." }, 503);
     const { data: signed, error: signingError } = rows.length

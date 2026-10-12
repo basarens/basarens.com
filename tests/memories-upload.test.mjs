@@ -49,6 +49,7 @@ function fixture(options = {}) {
   const query = {
     select() { return this; }, eq(...args) { calls.push(["eq", ...args]); return this; },
     order() { return this; },
+    or(filter) { calls.push(["search", filter]); return this; },
     range: async (from, to) => { calls.push(["range", from, to]); return { data: options.rows ?? [], count: options.total ?? 0, error: null }; },
     maybeSingle: async () => {
       if (updating) { updating = false; return { data: options.updateMissing ? null : { id: "12345678-1234-1234-1234-123456789abc", name: "Photographer", message: "Context" }, error: options.updateError ? { code: "failure" } : null }; }
@@ -72,12 +73,23 @@ function fixture(options = {}) {
     memoriesLinkHash: () => "a".repeat(64), memoriesClient: () => ({ storage, from: () => query }),
   };
   const { POST, GET, PATCH } = load("app/api/memories/route.ts", { "@/lib/memories/files": files, "@/lib/memories/server": server });
-  return { calls, edit: (body, token = "valid") => PATCH(new Request("https://example.com/api/memories", { method: "PATCH", headers: { authorization: `Bearer ${token}` }, body: JSON.stringify(body) })), get: (token = "valid", offset = "0") => GET(new Request(`https://example.com/api/memories?offset=${offset}`, { headers: { authorization: `Bearer ${token}` } })), run: (body, token = "valid") => POST(new Request("https://example.com/api/memories", {
+  return { calls, edit: (body, token = "valid") => PATCH(new Request("https://example.com/api/memories", { method: "PATCH", headers: { authorization: `Bearer ${token}` }, body: JSON.stringify(body) })), get: (token = "valid", offset = "0", search = "") => GET(new Request(`https://example.com/api/memories?offset=${offset}&search=${encodeURIComponent(search)}`, { headers: { authorization: `Bearer ${token}` } })), run: (body, token = "valid") => POST(new Request("https://example.com/api/memories", {
     method: "POST", headers: { authorization: `Bearer ${token}` }, body: JSON.stringify(body),
   })) };
 }
 const prepare = { action: "prepare", filename: "../../photo.jpg", type: "image/jpeg", size: 120, name: "Friend", message: "A memory" };
 const contextEdit = { id: "12345678-1234-1234-1234-123456789abc", name: "Photographer", message: "Context", previousName: "Friend", previousMessage: "A memory" };
+
+test("search covers context and photographer before pagination and keeps completed-upload restriction", async () => {
+  const f = fixture();
+  assert.equal((await f.get("valid", "24", "  Gent  ")).status, 200);
+  assert.deepEqual(f.calls.find(([name]) => name === "search"), ["search", 'name.ilike."%Gent%",message.ilike."%Gent%"']);
+  assert.ok(f.calls.some(([name, key, value]) => name === "eq" && key === "status" && value === "complete"));
+  assert.deepEqual(f.calls.find(([name]) => name === "range"), ["range", 24, 47]);
+  assert.equal((await fixture().get("valid", "0", "x".repeat(101))).status, 400);
+  const empty = fixture(); await empty.get("valid", "0", "   ");
+  assert.ok(!empty.calls.some(([name]) => name === "search"));
+});
 
 test("editing requires invitation and validates context fields", async () => {
   assert.equal((await fixture().edit(contextEdit, "invalid")).status, 403);
