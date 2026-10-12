@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { photoType, validPhoto } from "@/lib/memories/files";
+import { EMPTY_PHOTO_DATE, photoType, readPhotoDate, validPhoto } from "@/lib/memories/files";
+import { MemoriesDateFields } from "./memories-date-fields";
 import styles from "./memories-upload.module.css";
 import { MemoriesArchive } from "./memories-archive";
 
@@ -25,6 +26,7 @@ export function MemoriesUpload({ token, configured, featuredVideoUrl, featuredPh
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [name, setName] = useState("");
   const [message, setMessage] = useState("");
+  const [photoDate, setPhotoDate] = useState(EMPTY_PHOTO_DATE);
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
   const [archiveRevision, setArchiveRevision] = useState(0);
@@ -77,6 +79,7 @@ export function MemoriesUpload({ token, configured, featuredVideoUrl, featuredPh
 
   async function send() {
     if (busyRef.current || !configured) return;
+    if (!readPhotoDate(photoDate)) { setNotice("Controleer de datum: vul een geldig jaar in en alleen een dag die in die maand bestaat."); return; }
     busyRef.current = true;
     setBusy(true);
     setNotice("");
@@ -88,7 +91,7 @@ export function MemoriesUpload({ token, configured, featuredVideoUrl, featuredPh
         try {
           let uploadId = photo.uploadId;
           if (!uploadId) {
-            const upload = await api({ action: "prepare", filename: photo.file.name, type: photo.type, size: photo.file.size, name, message });
+            const upload = await api({ action: "prepare", filename: photo.file.name, type: photo.type, size: photo.file.size, name, message, ...photoDate });
             const response = await fetch(upload.uploadUrl, {
               method: "PUT", headers: { "Content-Type": photo.type }, body: photo.file,
               signal: AbortSignal.timeout(180000),
@@ -158,9 +161,10 @@ export function MemoriesUpload({ token, configured, featuredVideoUrl, featuredPh
           </div>
           {photos.length > 0 && <><div className={styles.selectionHeading}><span>{photos.length} foto’s geselecteerd</span><span>{sent} ontvangen</span></div><ul className={styles.photos}>{photos.map((photo) => <li key={photo.id}><div className={styles.thumbnail}><Preview file={photo.file} />{photo.status !== "sent" && <button type="button" aria-label={`Verwijder ${photo.file.name}`} disabled={busy} onClick={() => setPhotos((current) => current.filter((item) => item.id !== photo.id))}>×</button>}</div><p className={styles.filename} title={photo.file.name}>{photo.file.name}</p><p className={photo.status === "error" ? styles.error : styles.photoStatus}>{photo.status === "sent" ? "✓ Ontvangen" : photo.status === "sending" ? "Wordt verstuurd…" : photo.status === "error" ? photo.error : "Klaar om te versturen"}</p></li>)}</ul></>}
           <div className={styles.fields}><label>Wie moeten we hiervoor bedanken? <span>optioneel</span><input value={name} maxLength={80} disabled={busy} autoComplete="name" placeholder="Je naam" onChange={(event) => setName(event.target.value)} /></label><label>Wat gebeurde hier? <span>optioneel</span><textarea value={message} maxLength={1200} disabled={busy} rows={3} placeholder="Waar waren we? Wanneer was dit? En wat dacht ik hier te doen?" onChange={(event) => setMessage(event.target.value)} /></label></div>
+          <MemoriesDateFields value={photoDate} onChange={setPhotoDate} disabled={busy} batch />
           <div className={styles.sendRow}><p>Je foto’s, naam en verhaal komen in het gedeelde archief.<br />Iedereen met deze link kan ze bekijken.</p><button className={styles.send} type="button" disabled={busy || !waiting || !configured} onClick={send}>{busy ? "Even versturen…" : sent && !waiting ? "Alles ontvangen ✓" : `Verstuur${waiting ? ` ${waiting} foto${waiting === 1 ? "" : "’s"}` : " je foto’s"}`} <span aria-hidden="true">→</span></button></div>
           <p className={styles.notice} role="status" aria-live="polite">{notice}</p>
-          {sent > 0 && !waiting && <button className={styles.more} type="button" onClick={() => { setPhotos([]); setMessage(""); setNotice(""); inputRef.current?.click(); }}>Er is meer bewijsmateriaal</button>}
+          {sent > 0 && !waiting && <button className={styles.more} type="button" onClick={() => { setPhotos([]); setMessage(""); setPhotoDate(EMPTY_PHOTO_DATE); setNotice(""); inputRef.current?.click(); }}>Er is meer bewijsmateriaal</button>}
         </section>
         <MemoriesArchive token={token} revision={archiveRevision} />
         <footer className={styles.footer}><span>Goed gezelschap. Matige beslissingen.</span><span>Het archief van Bas · basarens.com</span></footer>

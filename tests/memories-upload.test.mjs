@@ -47,6 +47,8 @@ function fixture(options = {}) {
   const calls = [];
   let updating = false;
   const query = {
+    is(...args) { calls.push(["is", ...args]); return this; },
+    is(...args) { calls.push(["is", ...args]); return this; },
     select() { return this; }, eq(...args) { calls.push(["eq", ...args]); return this; },
     order() { return this; },
     or(filter) { calls.push(["search", filter]); return this; },
@@ -79,6 +81,29 @@ function fixture(options = {}) {
 }
 const prepare = { action: "prepare", filename: "../../photo.jpg", type: "image/jpeg", size: 120, name: "Friend", message: "A memory" };
 const contextEdit = { id: "12345678-1234-1234-1234-123456789abc", name: "Photographer", message: "Context", previousName: "Friend", previousMessage: "A memory" };
+
+test("partial photo dates preserve unknown parts and reject impossible calendar dates", () => {
+  for (const date of [{}, {photo_year:2022}, {photo_year:2022,photo_month:5}, {photo_year:2024,photo_month:2,photo_day:29}, {photo_year:2000,photo_month:2,photo_day:29}]) assert.ok(files.readPhotoDate(date));
+  for (const date of [{photo_month:5}, {photo_year:2022,photo_day:2}, {photo_year:0}, {photo_year:10000}, {photo_year:"2022"}, {photo_year:2022,photo_month:13}, {photo_year:2023,photo_month:2,photo_day:29}, {photo_year:1900,photo_month:2,photo_day:29}, {photo_year:2022,photo_month:4,photo_day:31}]) assert.equal(files.readPhotoDate(date),null);
+  assert.deepEqual(files.readPhotoDate({photo_year:2022}), {photo_year:2022,photo_month:null,photo_day:null});
+  assert.equal(files.formatPhotoDate(files.readPhotoDate({photo_year:2022})), "2022");
+  assert.equal(files.formatPhotoDate(files.readPhotoDate({photo_year:2022,photo_month:5})), "mei 2022");
+});
+
+test("date edits compare unknown and known date parts atomically; legacy edits preserve dates", async () => {
+  const f = fixture();
+  const date = {photo_year:2024,photo_month:2,photo_day:29};
+  const previousDate = {photo_year:2022,photo_month:null,photo_day:null};
+  assert.equal((await f.edit({...contextEdit,...date,previousDate})).status,200);
+  assert.deepEqual(f.calls.find(([name])=>name==="update")[1],{name:"Photographer",message:"Context",...date});
+  assert.ok(f.calls.some(([name,key,value])=>name==="eq"&&key==="photo_year"&&value===2022));
+  for (const field of ["photo_month","photo_day"]) assert.ok(f.calls.some(([name,key,value])=>name==="is"&&key===field&&value===null));
+  assert.equal((await fixture().edit({...contextEdit,...date})).status,400);
+  assert.equal((await fixture().run({...prepare,photo_year:2023,photo_month:2,photo_day:29})).status,400);
+  const upload = fixture();
+  assert.equal((await upload.run({...prepare,photo_year:2022})).status,200);
+  assert.equal(upload.calls.find(([name])=>name==="insert")[1].photo_month,null);
+});
 
 test("search covers context and photographer before pagination and keeps completed-upload restriction", async () => {
   const f = fixture();

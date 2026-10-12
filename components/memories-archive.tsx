@@ -2,11 +2,13 @@
 
 import { type FormEvent, useEffect, useRef, useState } from "react";
 import styles from "./memories-archive.module.css";
+import { EMPTY_PHOTO_DATE, formatPhotoDate, readPhotoDate, type PhotoDate } from "@/lib/memories/files";
+import { MemoriesDateFields } from "./memories-date-fields";
 
-type ArchivePhoto = { id: string; filename: string; name: string; message: string; created_at: string; url: string | null };
+type ArchivePhoto = PhotoDate & { id: string; filename: string; name: string; message: string; created_at: string; url: string | null };
 type ArchivePage = { photos: ArchivePhoto[]; total: number; nextOffset: number | null };
 
-type PhotoContext = Pick<ArchivePhoto, "id" | "name" | "message">;
+type PhotoContext = Pick<ArchivePhoto, "id" | "name" | "message" | "photo_year" | "photo_month" | "photo_day">;
 
 function PhotoCard({ photo, token, onUpdate }: { photo: ArchivePhoto; token: string; onUpdate: (photo: PhotoContext) => void }) {
   const [failed, setFailed] = useState(false);
@@ -14,7 +16,8 @@ function PhotoCard({ photo, token, onUpdate }: { photo: ArchivePhoto; token: str
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(photo.name);
   const [message, setMessage] = useState(photo.message);
-  const [baseline, setBaseline] = useState({ name: photo.name, message: photo.message });
+  const [photoDate, setPhotoDate] = useState(readPhotoDate(photo) ?? EMPTY_PHOTO_DATE);
+  const [baseline, setBaseline] = useState({ name: photo.name, message: photo.message, date: readPhotoDate(photo) ?? EMPTY_PHOTO_DATE });
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
@@ -30,17 +33,20 @@ function PhotoCard({ photo, token, onUpdate }: { photo: ArchivePhoto; token: str
   }
   function edit() {
     setName(photo.name); setMessage(photo.message);
-    setBaseline({ name: photo.name, message: photo.message });
+    const date = readPhotoDate(photo) ?? EMPTY_PHOTO_DATE;
+    setPhotoDate(date);
+    setBaseline({ name: photo.name, message: photo.message, date });
     setNotice(""); setError(""); setConflict(null); setEditing(true);
   }
   async function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (saving.current || conflict) return;
+    if (!readPhotoDate(photoDate)) { setError("Controleer de datum: vul een geldig jaar in en alleen een dag die in die maand bestaat."); return; }
     saving.current = true; setBusy(true); setError(""); setNotice("");
     try {
       const response = await fetch("/api/memories", {
         method: "PATCH", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ id: photo.id, name, message, previousName: baseline.name, previousMessage: baseline.message }),
+        body: JSON.stringify({ id: photo.id, name, message, ...photoDate, previousDate: baseline.date, previousName: baseline.name, previousMessage: baseline.message }),
         signal: AbortSignal.timeout(30000),
       });
       const data = await response.json();
@@ -73,12 +79,14 @@ function PhotoCard({ photo, token, onUpdate }: { photo: ArchivePhoto; token: str
         {editing ? <form onSubmit={save} className={styles.editForm}>
           <label htmlFor={`photographer-${photo.id}`}>Fotograaf<input id={`photographer-${photo.id}`} value={name} maxLength={80} disabled={busy} placeholder="Wie maakte deze foto?" onChange={(event) => setName(event.target.value)} /></label>
           <label htmlFor={`context-${photo.id}`}>Context<textarea id={`context-${photo.id}`} value={message} maxLength={1200} disabled={busy} rows={4} placeholder="Waar was dit? Wat gebeurde er?" onChange={(event) => setMessage(event.target.value)} /></label>
+          <MemoriesDateFields value={photoDate} onChange={setPhotoDate} disabled={busy} />
           <p className={styles.editNote}>Wijzigingen zijn zichtbaar voor iedereen met de link.</p>
           <div className={styles.editActions}><button className={styles.saveButton} type="submit" disabled={busy || !!conflict}>{busy ? "Opslaan…" : "Opslaan"}</button><button type="button" disabled={busy} onClick={() => { setEditing(false); setError(""); setConflict(null); }}>Annuleren</button></div>
         </form> : <div className={styles.contextRead}>
           <p className={styles.fieldLabel}>Fotograaf</p><p className={styles.author}>{photo.name || "Nog onbekend. Weet jij wie het was?"}</p>
           <p className={styles.fieldLabel}>Context</p><p className={styles.contextStory}>{photo.message || "Hier ontbreekt het verhaal nog. Vul jij het aan?"}</p>
-          <button className={styles.editButton} type="button" onClick={edit}>Context of fotograaf aanpassen</button>
+          <p className={styles.fieldLabel}>Datum van de foto</p><p className={styles.author}>{formatPhotoDate(readPhotoDate(photo) ?? EMPTY_PHOTO_DATE)}</p>
+          <button className={styles.editButton} type="button" onClick={edit}>Context, fotograaf of datum aanpassen</button>
         </div>}
         <div className={styles.feedback} aria-live="polite" role="status">{error && <p className={styles.cardError}>{error}</p>}{notice && <p>{notice}</p>}{conflict && <button type="button" onClick={() => { onUpdate(conflict); setConflict(null); setError(""); setEditing(false); setNotice("Dit is de nieuwste context. Je kunt opnieuw aanpassen."); }}>Nieuwste context bekijken</button>}</div>
         {!editing && <div className={styles.details}><span>Ingestuurd {new Date(photo.created_at).toLocaleDateString("nl-NL", { timeZone: "Europe/Amsterdam", day: "numeric", month: "short", year: "numeric" })}</span>{photo.url && <a href={photo.url} target="_blank" rel="noreferrer">Originele foto ↗</a>}</div>}

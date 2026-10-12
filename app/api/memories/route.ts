@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { archiveSearchFilter, MAX_PHOTO_BYTES, PHOTO_TYPES, validPhoto } from "@/lib/memories/files";
+import { archiveSearchFilter, MAX_PHOTO_BYTES, PHOTO_TYPES, readPhotoDate, validPhoto } from "@/lib/memories/files";
 import { MEMORIES_BUCKET, memoriesClient, memoriesConfigured, memoriesLinkHash, validMemoriesToken } from "@/lib/memories/server";
 
 export const runtime = "nodejs";
@@ -24,7 +24,7 @@ export async function GET(request: Request) {
     // The current invitation grants access to the entire completed archive,
     // including photos sent through previous invitations. Never show pending uploads.
     let query = client.from("memories_uploads")
-      .select("id,path,filename,name,message,created_at", { count: "exact" })
+      .select("id,path,filename,name,message,photo_year,photo_month,photo_day,created_at", { count: "exact" })
       .eq("status", "complete");
     if (search) query = query.or(archiveSearchFilter(search));
     const { data: rows, count, error } = await query.order("created_at", { ascending: false })
@@ -59,18 +59,25 @@ export async function PATCH(request: Request) {
       typeof body.previousMessage !== "string" || body.previousMessage.length > 1200) {
     return reply({ error: "Gebruik maximaal 80 tekens voor de fotograaf en 1.200 voor de context." }, 400);
   }
+  const editsDate = ["photo_year", "photo_month", "photo_day"].some((field) => Object.hasOwn(body, field));
+  const date = readPhotoDate(body);
+  const previousDate = body.previousDate && typeof body.previousDate === "object" && !Array.isArray(body.previousDate) ? readPhotoDate(body.previousDate) : null;
+  if (!date || (editsDate && !previousDate)) return reply({ error: "Vul een geldig jaar in, eventueel met maand en dag. Controleer of de datum bestaat." }, 400);
   try {
     const client = memoriesClient();
     // Compare-and-update in one query: another visitor's edit must not be overwritten.
-    const { data, error } = await client.from("memories_uploads")
-      .update({ name: body.name.trim(), message: body.message.trim() })
+    let update = client.from("memories_uploads")
+      .update({ name: body.name.trim(), message: body.message.trim(), ...(editsDate ? date : {}) })
       .eq("id", body.id).eq("status", "complete")
-      .eq("name", body.previousName).eq("message", body.previousMessage)
-      .select("id,name,message").maybeSingle();
+      .eq("name", body.previousName).eq("message", body.previousMessage);
+    if (editsDate && previousDate) {
+      for (const [field, value] of Object.entries(previousDate)) update = value === null ? update.is(field, null) : update.eq(field, value);
+    }
+    const { data, error } = await update.select("id,name,message,photo_year,photo_month,photo_day").maybeSingle();
     if (error) return reply({ error: "Opslaan is niet gelukt. Probeer opnieuw." }, 503);
     if (!data) {
       const { data: current, error: currentError } = await client.from("memories_uploads")
-        .select("id,name,message").eq("id", body.id).eq("status", "complete").maybeSingle();
+        .select("id,name,message,photo_year,photo_month,photo_day").eq("id", body.id).eq("status", "complete").maybeSingle();
       if (currentError) return reply({ error: "Opslaan is niet gelukt. Probeer opnieuw." }, 503);
       if (!current) return reply({ error: "Deze foto is niet beschikbaar." }, 404);
       return reply({ error: "Iemand heeft deze foto ondertussen aangepast. Bekijk eerst de nieuwste context.", current }, 409);
@@ -115,6 +122,8 @@ export async function POST(request: Request) {
         typeof body.name !== "string" || body.name.length > 80 || typeof body.message !== "string" || body.message.length > 1200) {
       return reply({ error: "Kies een JPG, PNG, WEBP of HEIC-foto van maximaal 20 MB." }, 400);
     }
+    const date = readPhotoDate(body);
+    if (!date) return reply({ error: "Vul een geldig jaar in, eventueel met maand en dag. Controleer of de datum bestaat." }, 400);
     const { data: bucket, error: bucketError } = await client.storage.getBucket(MEMORIES_BUCKET);
     if (bucketError || !bucket || bucket.public || !bucket.file_size_limit || Number(bucket.file_size_limit) > MAX_PHOTO_BYTES ||
         !bucket.allowed_mime_types?.length || bucket.allowed_mime_types.some((type) => !PHOTO_TYPES[type])) {
@@ -124,7 +133,7 @@ export async function POST(request: Request) {
     const path = `${linkHash.slice(0, 16)}/${id}.${PHOTO_TYPES[body.type]}`;
     const { error: reservationError } = await client.from("memories_uploads").insert({
       id, path, link_hash: linkHash, filename: body.filename.trim(), size: body.size,
-      name: body.name.trim(), message: body.message.trim(), status: "pending",
+      name: body.name.trim(), message: body.message.trim(), ...date, status: "pending",
     });
     if (reservationError) return reply({ error: "Het insturen is momenteel niet beschikbaar. Probeer het later opnieuw." }, 503);
     const { data, error } = await client.storage.from(MEMORIES_BUCKET).createSignedUploadUrl(path);

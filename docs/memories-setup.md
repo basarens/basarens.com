@@ -34,3 +34,5 @@ Zonder configuratie slaat de pagina niets op en geeft dat duidelijk aan. Ongeldi
 De pagina is pas echt beschikbaar voor vrienden na configuratie én deployment. Er worden geen externe infrastructuurinstellingen door deze codewijziging aangemaakt.
 
 - De achterste kaart toont de private foto `featured/friends-2026-10-12.jpeg` uit `memories-inbox`, via een link van een uur die alleen na controle van de uitnodigingslink wordt gemaakt. Deze uitgelichte foto staat los van de inzendingen in het archief.
+
+- Optionele fotodatum: voer `supabase/memories-dates.sql` uit na het basisschema, ook voor bestaande installaties. Dit voegt nullable `photo_year`, `photo_month` en `photo_day` toe met kalendercontroles en een index voor latere datumfilters. De uploaddatum blijft apart. Jaar, jaar + maand of een volledige datum zijn mogelijk; onbekende delen blijven NULL. Bij upload geldt de datum voor de hele selectie, daarna kan iedereen met de link de datum per foto aanpassen of leegmaken. Gelijktijdige datumwijzigingen worden beschermd tegen overschrijven.
