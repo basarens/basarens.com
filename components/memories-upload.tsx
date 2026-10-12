@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import { EMPTY_PHOTO_DATE, photoType, readPhotoDate, validPhoto } from "@/lib/memories/files";
 import { MemoriesDateFields } from "./memories-date-fields";
 import styles from "./memories-upload.module.css";
-import { MemoriesMailSettings } from "./memories-mail-settings";
 import { MemoriesArchive } from "./memories-archive";
 
 type Photo = { id: string; file: File; type: string; status: "ready" | "sending" | "sent" | "error"; error?: string; uploadId?: string };
@@ -167,7 +166,6 @@ export function MemoriesUpload({ configured, viewerName, featuredVideoUrl, featu
           <p className={styles.notice} role="status" aria-live="polite">{notice}</p>
           {sent > 0 && !waiting && <button className={styles.more} type="button" onClick={() => { setPhotos([]); setMessage(""); setPhotoDate(EMPTY_PHOTO_DATE); setNotice(""); inputRef.current?.click(); }}>Er is meer bewijsmateriaal</button>}
         </section>
-        <MemoriesMailSettings />
         <MemoriesArchive revision={archiveRevision} />
         <footer className={styles.footer}><span>Goed gezelschap. Matige beslissingen.</span><span>Het archief van Bas · basarens.com</span></footer>
       </div>

@@ -1,3 +1,0 @@
-{
-  "crons": [{ "path": "/api/memories/monthly", "schedule": "0 8 * * *" }]
-}
