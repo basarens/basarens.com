@@ -21,7 +21,7 @@ function Preview({ file }: { file: File }) {
   return <img ref={imageRef} alt={file.name} onError={() => setFailed(true)} />;
 }
 
-export function MemoriesUpload({ token, configured, featuredVideoUrl }: { token: string; configured: boolean; featuredVideoUrl?: string }) {
+export function MemoriesUpload({ token, configured, featuredVideoUrl, featuredPhotoUrl }: { token: string; configured: boolean; featuredVideoUrl?: string; featuredPhotoUrl?: string }) {
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [name, setName] = useState("");
   const [message, setMessage] = useState("");
@@ -107,7 +107,11 @@ export function MemoriesUpload({ token, configured, featuredVideoUrl }: { token:
         <section className={styles.intro}>
           <div><p className={styles.eyebrow}>Het fotoarchief dat Bas zelf niet heeft.</p><h1>De mooiste momenten maak je samen <em>met Bas</em></h1><p className={styles.friends}>en Ruben, en Willem, en Jord.</p><p className={styles.lead}>Vakanties, slechte dansmoves en avonden met een goed verhaal. Heb jij de foto’s nog? Stuur ze door. Ook als ik er minder charmant op sta.</p></div>
           <div className={styles.art}>
-            <div className={styles.backCard} aria-hidden="true">Dit leek toen een goed idee.</div>
+            <div className={styles.backCard} aria-hidden="true">
+              {/* eslint-disable-next-line @next/next/no-img-element -- Keep the private signed photo outside the shared image optimization cache. */}
+              {featuredPhotoUrl && <img className={styles.featuredPhoto} src={featuredPhotoUrl} alt="" />}
+              <span className={styles.backCaption}>Dit leek toen een goed idee.</span>
+            </div>
             <figure className={styles.frontCard}>
               {featuredVideoUrl ? (
                 <video className={styles.featuredMedia} autoPlay loop muted controls playsInline preload="auto" aria-label="Video van Bas: Ja, ik kom niet nuchter thuis">

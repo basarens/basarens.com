@@ -15,6 +15,15 @@ export async function memoriesFeaturedVideoUrl() {
   return error ? undefined : data?.signedUrl;
 }
 
+export async function memoriesFeaturedPhotoUrl() {
+  if (!memoriesConfigured()) return undefined;
+  const client = memoriesClient();
+  const { data: bucket, error: bucketError } = await client.storage.getBucket(MEMORIES_BUCKET);
+  if (bucketError || !bucket || bucket.public) return undefined;
+  const { data, error } = await client.storage.from(MEMORIES_BUCKET).createSignedUrl("featured/friends-2026-10-12.jpeg", 3600);
+  return error ? undefined : data?.signedUrl;
+}
+
 export function validMemoriesToken(token: string) {
   const expected = process.env.MEMORIES_UPLOAD_TOKEN;
   if (!expected || expected.length < 32 || token.length > 200) return false;

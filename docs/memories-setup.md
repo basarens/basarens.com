@@ -32,3 +32,5 @@ Zonder configuratie slaat de pagina niets op en geeft dat duidelijk aan. Ongeldi
 - Supabase is opslag, geen onafhankelijke back-up. Exporteer de originele bestanden en metadata regelmatig naar een tweede locatie. Houd ook de opslaglimieten van je Supabase-abonnement in de gaten.
 
 De pagina is pas echt beschikbaar voor vrienden na configuratie én deployment. Er worden geen externe infrastructuurinstellingen door deze codewijziging aangemaakt.
+
+- De achterste kaart toont de private foto `featured/friends-2026-10-12.jpeg` uit `memories-inbox`, via een link van een uur die alleen na controle van de uitnodigingslink wordt gemaakt. Deze uitgelichte foto staat los van de inzendingen in het archief.
