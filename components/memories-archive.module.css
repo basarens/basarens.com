@@ -60,3 +60,6 @@
 .search input:focus-visible { outline: 3px solid #bb6046; outline-offset: 2px; }
 @media (max-width: 480px) { .search > div { flex-wrap: wrap; } .search input { font-size: 16px; } }
 .removal{border-top:1px solid #29392e20;margin-top:16px;padding-top:10px}.removal p{font-size:11px;line-height:1.6;color:#69796a}.archive .removal button{white-space:normal;color:#a34e3b;width:100%}
+.archive .frontVote { position: absolute; top: 8px; right: 8px; max-width: calc(100% - 16px); min-height: 44px; padding: 8px 11px; border-radius: 8px; background: #fffdf8f2; color: #a34e3b; font-size: 11px; box-shadow: 0 2px 10px #0002; white-space: normal; }
+.archive .frontVote[aria-pressed="true"] { background: #a34e3b; color: #fffdf8; }
+.frontFeedback { position: absolute; top: 58px; left: 8px; right: 8px; padding: 8px 10px; border-radius: 7px; background: #fffdf8f2; color: #29392e; font-size: 11px; line-height: 1.5; overflow-wrap: anywhere; }
