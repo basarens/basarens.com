@@ -45,13 +45,17 @@ test("invitation comparison fails closed for absent, short and incorrect secrets
 
 function fixture(options = {}) {
   const calls = [];
+  let updating = false;
   const query = {
     select() { return this; }, eq(...args) { calls.push(["eq", ...args]); return this; },
     order() { return this; },
     range: async (from, to) => { calls.push(["range", from, to]); return { data: options.rows ?? [], count: options.total ?? 0, error: null }; },
-    maybeSingle: async () => ({ data: { path: "private/photo.jpg", size: 120, status: "pending" }, error: null }),
+    maybeSingle: async () => {
+      if (updating) { updating = false; return { data: options.updateMissing ? null : { id: "12345678-1234-1234-1234-123456789abc", name: "Photographer", message: "Context" }, error: options.updateError ? { code: "failure" } : null }; }
+      return { data: options.photoMissing ? null : { id: "12345678-1234-1234-1234-123456789abc", path: "private/photo.jpg", size: 120, status: "pending", name: "Other editor", message: "Latest context" }, error: null };
+    },
     insert: async (row) => { calls.push(["insert", row]); return { error: null }; },
-    update() { calls.push(["update"]); return this; },
+    update(values) { updating = true; calls.push(["update", values]); return this; },
     delete() { return this; },
   };
   const storage = {
@@ -67,12 +71,41 @@ function fixture(options = {}) {
     memoriesConfigured: () => options.configured ?? true,
     memoriesLinkHash: () => "a".repeat(64), memoriesClient: () => ({ storage, from: () => query }),
   };
-  const { POST, GET } = load("app/api/memories/route.ts", { "@/lib/memories/files": files, "@/lib/memories/server": server });
-  return { calls, get: (token = "valid", offset = "0") => GET(new Request(`https://example.com/api/memories?offset=${offset}`, { headers: { authorization: `Bearer ${token}` } })), run: (body, token = "valid") => POST(new Request("https://example.com/api/memories", {
+  const { POST, GET, PATCH } = load("app/api/memories/route.ts", { "@/lib/memories/files": files, "@/lib/memories/server": server });
+  return { calls, edit: (body, token = "valid") => PATCH(new Request("https://example.com/api/memories", { method: "PATCH", headers: { authorization: `Bearer ${token}` }, body: JSON.stringify(body) })), get: (token = "valid", offset = "0") => GET(new Request(`https://example.com/api/memories?offset=${offset}`, { headers: { authorization: `Bearer ${token}` } })), run: (body, token = "valid") => POST(new Request("https://example.com/api/memories", {
     method: "POST", headers: { authorization: `Bearer ${token}` }, body: JSON.stringify(body),
   })) };
 }
 const prepare = { action: "prepare", filename: "../../photo.jpg", type: "image/jpeg", size: 120, name: "Friend", message: "A memory" };
+const contextEdit = { id: "12345678-1234-1234-1234-123456789abc", name: "Photographer", message: "Context", previousName: "Friend", previousMessage: "A memory" };
+
+test("editing requires invitation and validates context fields", async () => {
+  assert.equal((await fixture().edit(contextEdit, "invalid")).status, 403);
+  for (const body of [null, { ...contextEdit, id: "../photo" }, { ...contextEdit, name: "x".repeat(81) }, { ...contextEdit, message: "x".repeat(1201) }, { ...contextEdit, previousName: null }]) {
+    const f = fixture();
+    assert.equal((await f.edit(body)).status, 400);
+    assert.equal(f.calls.length, 0);
+  }
+});
+
+test("editing modifies only photographer/context and compares previous values atomically", async () => {
+  const f = fixture();
+  const response = await f.edit({ ...contextEdit, name: " Photographer ", message: " Context ", path: "forbidden.jpg", status: "pending" });
+  assert.equal(response.status, 200);
+  assert.deepEqual(f.calls.find(([name]) => name === "update"), ["update", { name: "Photographer", message: "Context" }]);
+  for (const [field, value] of [["id", contextEdit.id], ["status", "complete"], ["name", contextEdit.previousName], ["message", contextEdit.previousMessage]]) {
+    assert.ok(f.calls.some(([name, key, actual]) => name === "eq" && key === field && actual === value));
+  }
+  assert.deepEqual(Object.keys((await response.json()).photo).sort(), ["id", "message", "name"]);
+});
+
+test("editing detects concurrent changes and unavailable photos", async () => {
+  const conflict = await fixture({ updateMissing: true }).edit(contextEdit);
+  assert.equal(conflict.status, 409);
+  assert.equal((await conflict.json()).current.message, "Latest context");
+  assert.equal((await fixture({ updateMissing: true, photoMissing: true }).edit(contextEdit)).status, 404);
+  assert.equal((await fixture({ updateError: true }).edit(contextEdit)).status, 503);
+});
 
 test("invalid invitations and unconfigured storage cannot reserve uploads", async () => {
   const f = fixture();

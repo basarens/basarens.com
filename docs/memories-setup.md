@@ -16,6 +16,9 @@ Zonder configuratie slaat de pagina niets op en geeft dat duidelijk aan. Ongeldi
 
 ## Gedrag en beheer
 
+- Tik of klik op een foto om de kaart om te draaien. Op de achterkant kun je de context en fotograaf bekijken, aanpassen en opslaan. Iedereen met een geldige link heeft dezelfde bewerkrechten. De velden fotograaf en context gebruiken de bestaande kolommen `name` en `message`; er is geen database-migratie nodig. Nieuwe inzendingen nemen aanvankelijk de opgegeven naam over als fotograaf. De inzenddatum en originele foto veranderen niet. Bij gelijktijdig bewerken wordt een verouderde wijziging geweigerd; de gebruiker kan de nieuwste context bekijken voordat die opnieuw aanpast. Er is geen versiegeschiedenis.
+- Controle: `node --test tests/memories-upload.test.mjs`. Voor een echte test met één tijdelijke foto: `node scripts/verify-memories.mjs`, of `node scripts/verify-memories.mjs --live` voor www.basarens.com. Deze test wijzigt uitsluitend zijn eigen testrecord en ruimt foto en record daarna op.
+
 - De kaart bovenaan kan een video tonen via `MEMORIES_FEATURE_VIDEO_URL` in `.env.local` en de hostinginstellingen. Gebruik een direct afspeelbare videolink of een pad op deze site. Zonder video toont de kaart een tijdelijke placeholder; het bijschrift blijft zichtbaar. De video heeft bediening en speelt niet automatisch af. Gebruik voor een besloten video geen bestand onder `public`: bestanden daar zijn voor iedereen met het bestandspad bereikbaar, onafhankelijk van de uitnodigingslink.
 
 - Maximaal 20 foto’s per selectie, 20 MB per foto: JPEG, PNG, WEBP, HEIC/HEIF. HEIC is uploadbaar, maar niet iedere browser kan een voorbeeld tonen. Originele bestanden worden bewaard, inclusief eventuele locatiegegevens/EXIF. Er is geen bestandsconversie.

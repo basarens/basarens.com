@@ -39,6 +39,44 @@ export async function GET(request: Request) {
   }
 }
 
+export async function PATCH(request: Request) {
+  const token = request.headers.get("authorization")?.replace(/^Bearer /, "") ?? "";
+  if (!validMemoriesToken(token)) return reply({ error: "Deze uitnodigingslink is niet geldig." }, 403);
+  if (!memoriesConfigured()) return reply({ error: "Het archief is nog niet beschikbaar." }, 503);
+  const raw = await request.text();
+  if (raw.length > 8192) return reply({ error: "De context is te lang." }, 413);
+  let body;
+  try { body = JSON.parse(raw); } catch { return reply({ error: "Ongeldig verzoek." }, 400); }
+  if (!body || typeof body !== "object" || Array.isArray(body) ||
+      typeof body.id !== "string" || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(body.id) ||
+      typeof body.name !== "string" || body.name.length > 80 ||
+      typeof body.message !== "string" || body.message.length > 1200 ||
+      typeof body.previousName !== "string" || body.previousName.length > 80 ||
+      typeof body.previousMessage !== "string" || body.previousMessage.length > 1200) {
+    return reply({ error: "Gebruik maximaal 80 tekens voor de fotograaf en 1.200 voor de context." }, 400);
+  }
+  try {
+    const client = memoriesClient();
+    // Compare-and-update in one query: another visitor's edit must not be overwritten.
+    const { data, error } = await client.from("memories_uploads")
+      .update({ name: body.name.trim(), message: body.message.trim() })
+      .eq("id", body.id).eq("status", "complete")
+      .eq("name", body.previousName).eq("message", body.previousMessage)
+      .select("id,name,message").maybeSingle();
+    if (error) return reply({ error: "Opslaan is niet gelukt. Probeer opnieuw." }, 503);
+    if (!data) {
+      const { data: current, error: currentError } = await client.from("memories_uploads")
+        .select("id,name,message").eq("id", body.id).eq("status", "complete").maybeSingle();
+      if (currentError) return reply({ error: "Opslaan is niet gelukt. Probeer opnieuw." }, 503);
+      if (!current) return reply({ error: "Deze foto is niet beschikbaar." }, 404);
+      return reply({ error: "Iemand heeft deze foto ondertussen aangepast. Bekijk eerst de nieuwste context.", current }, 409);
+    }
+    return reply({ photo: data });
+  } catch {
+    return reply({ error: "Opslaan is tijdelijk niet beschikbaar. Probeer opnieuw." }, 503);
+  }
+}
+
 export async function POST(request: Request) {
   const token = request.headers.get("authorization")?.replace(/^Bearer /, "") ?? "";
   if (!validMemoriesToken(token)) return reply({ error: "Deze uitnodigingslink is niet geldig." }, 403);
