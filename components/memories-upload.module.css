@@ -13,3 +13,7 @@
   .featuredMedia, .videoPlaceholder { height: 146px; }
   .videoCaption { font-size: 12px; }
 }
+@media (min-width: 1100px) {
+  .shell { max-width: 1680px; padding-inline: 48px; }
+  .intro, .panel { max-width: 1048px; margin-inline: auto; }
+}
