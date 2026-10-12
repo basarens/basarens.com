@@ -30,8 +30,22 @@ export function MemoriesUpload({ token, configured, featuredVideoUrl, featuredPh
   const [archiveRevision, setArchiveRevision] = useState(0);
   const busyRef = useRef(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [videoMuted, setVideoMuted] = useState(true);
   const sent = photos.filter((photo) => photo.status === "sent").length;
   const waiting = photos.filter((photo) => photo.status !== "sent").length;
+
+  function toggleVideoSound() {
+    const video = videoRef.current;
+    if (!video) return;
+    video.muted = !video.muted;
+    setVideoMuted(video.muted);
+    // Resume within the tap gesture if the phone has blocked autoplay.
+    void video.play().catch(() => {
+      video.muted = true;
+      setVideoMuted(true);
+    });
+  }
 
   function selectFiles(files: FileList | null) {
     if (!files || busyRef.current) return;
@@ -113,10 +127,19 @@ export function MemoriesUpload({ token, configured, featuredVideoUrl, featuredPh
             </div>
             <figure className={styles.frontCard}>
               {featuredVideoUrl ? (
-                <video className={styles.featuredMedia} autoPlay loop muted controls playsInline preload="auto" aria-label="Video van Bas: Ja, ik kom niet nuchter thuis">
-                  <source src={featuredVideoUrl} type="video/mp4" />
-                  Je browser kan deze video niet afspelen. <a href={featuredVideoUrl}>Open de video</a>.
-                </video>
+                <div className={styles.videoFrame}>
+                  <video ref={videoRef} className={styles.featuredMedia} autoPlay loop muted={videoMuted} playsInline disablePictureInPicture disableRemotePlayback preload="auto" onVolumeChange={() => setVideoMuted(videoRef.current?.muted ?? true)} aria-label="Video van Bas: Ja, ik kom niet nuchter thuis">
+                    <source src={featuredVideoUrl} type="video/mp4" />
+                    Je browser kan deze video niet afspelen. <a href={featuredVideoUrl}>Open de video</a>.
+                  </video>
+                  <button className={styles.soundButton} type="button" onClick={toggleVideoSound} aria-label={videoMuted ? "Geluid aanzetten" : "Geluid uitzetten"} aria-pressed={!videoMuted}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <path d="M11 5 6 9H3v6h3l5 4V5Z" />
+                      {videoMuted ? <path d="m16 9 5 6m0-6-5 6" /> : <><path d="M15 8a6 6 0 0 1 0 8" /><path d="M18 5a10 10 0 0 1 0 14" /></>}
+                    </svg>
+                    {videoMuted ? "Geluid aan" : "Geluid uit"}
+                  </button>
+                </div>
               ) : (
                 <div className={styles.videoPlaceholder}><span>Video komt hier.</span><small>Het bewijs is onderweg.</small></div>
               )}
