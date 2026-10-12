@@ -122,7 +122,7 @@ export function MemoriesUpload({ token, configured, featuredVideoUrl, featuredPh
       <div className={styles.shell}>
         <header className={styles.header}><span className={styles.brand}>bas arens<span> / herinneringen</span></span><span className={styles.badge}>Van jou, voor Bas</span></header>
         <section className={styles.intro}>
-          <div><p className={styles.eyebrow}>Het fotoarchief dat Bas zelf niet heeft.</p><h1>De mooiste momenten maak je samen <em>met Bas</em></h1><p className={styles.friends}>en Ruben, en Willem, en Jord.</p><p className={styles.lead}>Vakanties, slechte dansmoves en avonden met een goed verhaal. Heb jij de foto’s nog? Stuur ze door. Ook als ik er minder charmant op sta.</p></div>
+          <div><p className={styles.eyebrow}>Het fotoarchief dat Bas zelf niet heeft.</p><h1>De mooiste momenten maak je samen <em>met Bas</em></h1><p className={styles.friends}>en Ruben, en Willem, en Jord.</p><p className={styles.lead}>Vakanties, slechte dansmoves en avonden met een goed verhaal. Heb jij de foto’s nog? Stuur ze door. Ook als je er minder charmant op staat.</p></div>
           <div className={styles.art}>
             <div className={styles.backCard} aria-hidden="true">
               {/* eslint-disable-next-line @next/next/no-img-element -- Keep the private signed photo outside the shared image optimization cache. */}
