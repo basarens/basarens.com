@@ -71,7 +71,10 @@ function PhotoCard({ photo, token, onUpdate }: { photo: ArchivePhoto; token: str
               <img src={photo.url} alt={photo.filename} loading="lazy" referrerPolicy="no-referrer" onError={() => setFailed(true)} />
             ) : <span className={styles.unavailable}>Geen fotovoorbeeld beschikbaar.<br />Tik om de context te bekijken.</span>}
           </span>
-          <span className={styles.frontCaption}><span className={styles.author}>{photo.name || "Fotograaf onbekend"}</span><span className={styles.flipHint}>Bekijk context ↻</span></span>
+          <span className={styles.frontCaption}>
+            <span className={styles.frontStory}>{photo.message.trim() || "Nog geen context"}</span>
+            <span className={styles.frontMeta}><span>{formatPhotoDate(readPhotoDate(photo) ?? EMPTY_PHOTO_DATE)}</span><span aria-hidden="true">↻</span></span>
+          </span>
         </button>
       </div>
       <div className={`${styles.face} ${styles.back}`} inert={!flipped} aria-hidden={!flipped}>
