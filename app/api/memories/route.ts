@@ -8,6 +8,37 @@ function reply(body: object, status = 200) {
   return Response.json(body, { status, headers: { "Cache-Control": "private, no-store" } });
 }
 
+export async function GET(request: Request) {
+  const token = request.headers.get("authorization")?.replace(/^Bearer /, "") ?? "";
+  if (!validMemoriesToken(token)) return reply({ error: "Deze uitnodigingslink is niet geldig." }, 403);
+  if (!memoriesConfigured()) return reply({ error: "Het fotoarchief is nog niet beschikbaar." }, 503);
+  const offsetText = new URL(request.url).searchParams.get("offset") ?? "0";
+  if (!/^\d{1,8}$/.test(offsetText)) return reply({ error: "Ongeldige archiefpagina." }, 400);
+  const offset = Number(offsetText);
+  try {
+    const client = memoriesClient();
+    const { data: bucket, error: bucketError } = await client.storage.getBucket(MEMORIES_BUCKET);
+    if (bucketError || !bucket || bucket.public) return reply({ error: "Het fotoarchief is tijdelijk niet beschikbaar." }, 503);
+    // The current invitation grants access to the entire completed archive,
+    // including photos sent through previous invitations. Never show pending uploads.
+    const { data: rows, count, error } = await client.from("memories_uploads")
+      .select("id,path,filename,name,message,created_at", { count: "exact" })
+      .eq("status", "complete").order("created_at", { ascending: false })
+      .order("id", { ascending: false }).range(offset, offset + 23);
+    if (error || !rows) return reply({ error: "Het archief kon niet worden geladen. Probeer opnieuw." }, 503);
+    const { data: signed, error: signingError } = rows.length
+      ? await client.storage.from(MEMORIES_BUCKET).createSignedUrls(rows.map((row) => row.path), 3600)
+      : { data: [], error: null };
+    if (signingError || !signed) return reply({ error: "De foto’s konden niet worden geladen. Probeer opnieuw." }, 503);
+    const photos = rows.map(({ path, ...photo }) => ({
+      ...photo, url: signed.find((item) => item.path === path && !item.error)?.signedUrl ?? null,
+    }));
+    return reply({ photos, total: count ?? photos.length, nextOffset: offset + rows.length < (count ?? 0) ? offset + rows.length : null });
+  } catch {
+    return reply({ error: "Het archief is tijdelijk niet beschikbaar. Probeer opnieuw." }, 503);
+  }
+}
+
 export async function POST(request: Request) {
   const token = request.headers.get("authorization")?.replace(/^Bearer /, "") ?? "";
   if (!validMemoriesToken(token)) return reply({ error: "Deze uitnodigingslink is niet geldig." }, 403);

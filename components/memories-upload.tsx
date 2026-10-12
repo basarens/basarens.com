@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { photoType, validPhoto } from "@/lib/memories/files";
 import styles from "./memories-upload.module.css";
+import { MemoriesArchive } from "./memories-archive";
 
 type Photo = { id: string; file: File; type: string; status: "ready" | "sending" | "sent" | "error"; error?: string; uploadId?: string };
 
@@ -26,6 +27,7 @@ export function MemoriesUpload({ token, configured, featuredVideoUrl }: { token:
   const [message, setMessage] = useState("");
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
+  const [archiveRevision, setArchiveRevision] = useState(0);
   const busyRef = useRef(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const sent = photos.filter((photo) => photo.status === "sent").length;
@@ -91,6 +93,7 @@ export function MemoriesUpload({ token, configured, featuredVideoUrl }: { token:
         }
       }
       setNotice(failed ? `${succeeded} foto’s ontvangen; ${failed} nog niet bevestigd. Je kunt die opnieuw proberen.` : "Alles binnen. Bedankt voor het bewijsmateriaal!");
+      if (succeeded) setArchiveRevision((value) => value + 1);
     } finally {
       busyRef.current = false;
       setBusy(false);
@@ -118,6 +121,7 @@ export function MemoriesUpload({ token, configured, featuredVideoUrl }: { token:
             </figure>
           </div>
         </section>
+        <MemoriesArchive token={token} revision={archiveRevision} />
         <section className={styles.panel} aria-labelledby="upload-title">
           <div className={styles.panelHeading}><div><p className={styles.eyebrow}>Tijd om je camerarol door te spitten</p><h2 id="upload-title">Heb jij nog bewijsmateriaal?</h2></div><span>Geen account nodig</span></div>
           {!configured && <p className={styles.warning} role="status">Het insturen staat nog niet aan. Je kunt alvast foto’s kiezen, maar ze worden nog niet opgeslagen. Kom later terug om ze te versturen.</p>}
@@ -129,7 +133,7 @@ export function MemoriesUpload({ token, configured, featuredVideoUrl }: { token:
           </div>
           {photos.length > 0 && <><div className={styles.selectionHeading}><span>{photos.length} foto’s geselecteerd</span><span>{sent} ontvangen</span></div><ul className={styles.photos}>{photos.map((photo) => <li key={photo.id}><div className={styles.thumbnail}><Preview file={photo.file} />{photo.status !== "sent" && <button type="button" aria-label={`Verwijder ${photo.file.name}`} disabled={busy} onClick={() => setPhotos((current) => current.filter((item) => item.id !== photo.id))}>×</button>}</div><p className={styles.filename} title={photo.file.name}>{photo.file.name}</p><p className={photo.status === "error" ? styles.error : styles.photoStatus}>{photo.status === "sent" ? "✓ Ontvangen" : photo.status === "sending" ? "Wordt verstuurd…" : photo.status === "error" ? photo.error : "Klaar om te versturen"}</p></li>)}</ul></>}
           <div className={styles.fields}><label>Wie moeten we hiervoor bedanken? <span>optioneel</span><input value={name} maxLength={80} disabled={busy} autoComplete="name" placeholder="Je naam" onChange={(event) => setName(event.target.value)} /></label><label>Wat gebeurde hier? <span>optioneel</span><textarea value={message} maxLength={1200} disabled={busy} rows={3} placeholder="Waar waren we? Wanneer was dit? En wat dacht ik hier te doen?" onChange={(event) => setMessage(event.target.value)} /></label></div>
-          <div className={styles.sendRow}><p>Je foto’s worden privé aan Bas gestuurd.<br />Andere bezoekers kunnen ze hier niet bekijken.</p><button className={styles.send} type="button" disabled={busy || !waiting || !configured} onClick={send}>{busy ? "Even versturen…" : sent && !waiting ? "Alles ontvangen ✓" : `Verstuur${waiting ? ` ${waiting} foto${waiting === 1 ? "" : "’s"}` : " je foto’s"}`} <span aria-hidden="true">→</span></button></div>
+          <div className={styles.sendRow}><p>Je foto’s, naam en verhaal komen in het gedeelde archief.<br />Iedereen met deze link kan ze bekijken.</p><button className={styles.send} type="button" disabled={busy || !waiting || !configured} onClick={send}>{busy ? "Even versturen…" : sent && !waiting ? "Alles ontvangen ✓" : `Verstuur${waiting ? ` ${waiting} foto${waiting === 1 ? "" : "’s"}` : " je foto’s"}`} <span aria-hidden="true">→</span></button></div>
           <p className={styles.notice} role="status" aria-live="polite">{notice}</p>
           {sent > 0 && !waiting && <button className={styles.more} type="button" onClick={() => { setPhotos([]); setMessage(""); setNotice(""); inputRef.current?.click(); }}>Er is meer bewijsmateriaal</button>}
         </section>

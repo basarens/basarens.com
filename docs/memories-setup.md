@@ -1,6 +1,6 @@
 # Foto’s insturen via een persoonlijke link
 
-De uploadpagina staat op `/herinneringen/<MEMORIES_UPLOAD_TOKEN>`. Deel uitsluitend die link. Er is geen publieke galerij of link vanaf de homepage. `/herinneringen` vertelt bezoekers dat ze een uitnodiging nodig hebben. De uitnodigingspagina gebruikt noindex en no-referrer. Iedereen die de link krijgt (ook via doorsturen) kan insturen; het is een toegangssleutel, geen individuele login.
+Het gedeelde fotoarchief staat op `/herinneringen/<MEMORIES_UPLOAD_TOKEN>`. Iedereen met deze link kan alle bevestigde foto’s, namen en verhalen bekijken én zelf foto’s insturen, ook na doorsturen van de link. Het archief bevat ook foto’s van eerdere uitnodigingen. Er is geen link vanaf de homepage. `/herinneringen` vertelt bezoekers dat ze een uitnodiging nodig hebben. De uitnodigingspagina gebruikt noindex en no-referrer. De link is een toegangssleutel, geen individuele login.
 
 ## Activeren
 
@@ -22,7 +22,7 @@ Zonder configuratie slaat de pagina niets op en geeft dat duidelijk aan. Ongeldi
 - Bestanden gaan rechtstreeks naar Supabase via een tijdelijke upload-URL. Dat voorkomt de limiet voor grote bestanden op de websitehosting. Iedere foto krijgt een willekeurige bestandsnaam; overschrijven is uitgeschakeld.
 - Na upload controleert de server de opgeslagen bestandsgrootte en bevestigt de ontvangst. Een mislukte bevestiging kan worden herhaald zonder de foto opnieuw te uploaden. Al bevestigde foto’s worden overgeslagen bij opnieuw proberen.
 - De database begrenst iedere uitnodiging op 1.000 reserveringen en 5 GiB aan opgegeven bestandsgrootte, ook bij gelijktijdige verzoeken. Mislukte/afgebroken uploads kunnen pending-reserveringen achterlaten; controleer deze vóór verwijderen. MIME-filtering is geen inhoudelijke fotovalidatie; behandel uploads als niet-vertrouwde bestanden.
-- Bekijk/download foto’s als eigenaar in Supabase Storage; naam en verhaal staan in `memories_uploads`. Een beheerpagina op de website is nog niet onderdeel van deze uploadfunctie.
+- Het gedeelde archief toont 24 foto’s per pagina, nieuwste inzendingen eerst, met een knop om de volgende pagina te laden. Namen en verhalen zijn zichtbaar. Na upload vernieuwt het archief automatisch; voor inzendingen van anderen is er een vernieuwknop. Tijdelijke leeslinks zijn één uur geldig. De bucket en database blijven privé: alleen de website kan na controle van de uitnodigingscode leeslinks maken. Deze tijdelijke links kunnen tijdens hun geldigheid ook worden doorgestuurd. Er is geen verwijderfunctie voor bezoekers.
 - Een gewijzigd token maakt de oude uitnodigingslink onbruikbaar voor nieuwe verzoeken. Eerder uitgegeven signed upload-URL’s kunnen nog tot twee uur werken. Eerdere foto’s blijven opgeslagen.
 - Supabase is opslag, geen onafhankelijke back-up. Exporteer de originele bestanden en metadata regelmatig naar een tweede locatie. Houd ook de opslaglimieten van je Supabase-abonnement in de gaten.
 
