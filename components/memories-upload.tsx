@@ -110,14 +110,14 @@ export function MemoriesUpload({ token, configured, featuredVideoUrl }: { token:
             <div className={styles.backCard} aria-hidden="true">Dit leek toen een goed idee.</div>
             <figure className={styles.frontCard}>
               {featuredVideoUrl ? (
-                <video className={styles.featuredMedia} autoPlay loop muted controls playsInline preload="auto" aria-label="Video van Bas: Ik kom niet nuchter thuis vandaag">
+                <video className={styles.featuredMedia} autoPlay loop muted controls playsInline preload="auto" aria-label="Video van Bas: Ja, ik kom niet nuchter thuis">
                   <source src={featuredVideoUrl} type="video/mp4" />
                   Je browser kan deze video niet afspelen. <a href={featuredVideoUrl}>Open de video</a>.
                 </video>
               ) : (
                 <div className={styles.videoPlaceholder}><span>Video komt hier.</span><small>Het bewijs is onderweg.</small></div>
               )}
-              <figcaption className={styles.videoCaption}>Ik kom niet nuchter thuis vandaag</figcaption>
+              <figcaption className={styles.videoCaption}>Ja, ik kom niet nuchter thuis</figcaption>
             </figure>
           </div>
         </section>
