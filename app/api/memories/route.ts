@@ -1,4 +1,4 @@
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { archiveSearchFilter, MAX_PHOTO_BYTES, PHOTO_TYPES, readPhotoDate, validPhoto } from "@/lib/memories/files";
 import { MEMORIES_BUCKET, memoriesClient, memoriesConfigured, memoriesLinkHash, validMemoriesToken } from "@/lib/memories/server";
 
@@ -17,6 +17,9 @@ export async function GET(request: Request) {
   const offset = Number(offsetText);
   const search = (new URL(request.url).searchParams.get("search") ?? "").trim();
   if (search.length > 100) return reply({ error: "Gebruik maximaal 100 tekens om te zoeken." }, 400);
+  const sort = new URL(request.url).searchParams.get("sort") ?? "latest";
+  const seed = new URL(request.url).searchParams.get("seed") ?? "";
+  if (!["latest", "date", "shuffle"].includes(sort) || (sort === "shuffle" && !/^[a-zA-Z0-9-]{8,80}$/.test(seed))) return reply({ error: "Ongeldige sortering." }, 400);
   try {
     const client = memoriesClient();
     const { data: bucket, error: bucketError } = await client.storage.getBucket(MEMORIES_BUCKET);
@@ -27,8 +30,26 @@ export async function GET(request: Request) {
       .select("id,path,filename,name,message,photo_year,photo_month,photo_day,created_at", { count: "exact" })
       .eq("status", "complete");
     if (search) query = query.or(archiveSearchFilter(search));
-    const { data: rows, count, error } = await query.order("created_at", { ascending: false })
-      .order("id", { ascending: false }).range(offset, offset + 23);
+    let result;
+    if (sort === "shuffle") {
+      // Shuffle metadata across the whole archive, while signing only the displayed page.
+      // A stable seed keeps the same order when visitors load the next page.
+      const all = [];
+      for (let start = 0; ; start += 1000) {
+        const batch = await query.order("id", { ascending: true }).range(start, start + 999);
+        if (batch.error || !batch.data) return reply({ error: "Het archief kon niet worden geladen. Probeer opnieuw." }, 503);
+        all.push(...batch.data);
+        if (batch.data.length < 1000) break;
+      }
+      const shuffled = all.map((photo) => ({ photo, key: createHash("sha256").update(`${seed}:${photo.id}`).digest("hex") }))
+        .sort((a, b) => a.key.localeCompare(b.key) || a.photo.id.localeCompare(b.photo.id));
+      result = { data: shuffled.slice(offset, offset + 24).map((item) => item.photo), count: all.length, error: null };
+    } else {
+      if (sort === "date") query = query.order("photo_year", { ascending: false, nullsFirst: false })
+        .order("photo_month", { ascending: false, nullsFirst: false }).order("photo_day", { ascending: false, nullsFirst: false });
+      result = await query.order("created_at", { ascending: false }).order("id", { ascending: false }).range(offset, offset + 23);
+    }
+    const { data: rows, count, error } = result;
     if (error || !rows) return reply({ error: "Het archief kon niet worden geladen. Probeer opnieuw." }, 503);
     const { data: signed, error: signingError } = rows.length
       ? await client.storage.from(MEMORIES_BUCKET).createSignedUrls(rows.map((row) => row.path), 3600)

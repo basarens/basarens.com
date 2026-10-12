@@ -101,12 +101,14 @@ export function MemoriesArchive({ token, revision }: { token: string; revision: 
   const [loadingMore, setLoadingMore] = useState(false);
   const [refresh, setRefresh] = useState(0);
   const [search, setSearch] = useState("");
+  const [sort, setSort] = useState("latest");
+  const [shuffleSeed, setShuffleSeed] = useState("");
   const searchQuery = search.trim();
   const generation = useRef(0);
   const moreBusy = useRef(false);
 
   async function fetchPage(offset: number, signal?: AbortSignal): Promise<ArchivePage> {
-    const response = await fetch(`/api/memories?offset=${offset}&search=${encodeURIComponent(searchQuery)}`, {
+    const response = await fetch(`/api/memories?offset=${offset}&search=${encodeURIComponent(searchQuery)}&sort=${sort}&seed=${shuffleSeed}`, {
       headers: { Authorization: `Bearer ${token}` }, cache: "no-store",
       signal: signal ?? AbortSignal.timeout(30000),
     });
@@ -121,7 +123,7 @@ export function MemoriesArchive({ token, revision }: { token: string; revision: 
     const timeout = setTimeout(() => controller.abort(), 30000);
     const current = ++generation.current;
     moreBusy.current = false;
-    const start = setTimeout(() => { fetch(`/api/memories?offset=0&search=${encodeURIComponent(searchQuery)}`, { headers: { Authorization: `Bearer ${token}` }, cache: "no-store", signal: controller.signal })
+    const start = setTimeout(() => { fetch(`/api/memories?offset=0&search=${encodeURIComponent(searchQuery)}&sort=${sort}&seed=${shuffleSeed}`, { headers: { Authorization: `Bearer ${token}` }, cache: "no-store", signal: controller.signal })
       .then(async (response) => {
         const data = await response.json();
         if (!response.ok) throw new Error(data.error || "Het archief kon niet worden geladen.");
@@ -131,7 +133,7 @@ export function MemoriesArchive({ token, revision }: { token: string; revision: 
         if (active && current === generation.current) { setError(reason.name === "AbortError" ? "Het laden duurt te lang. Probeer opnieuw." : reason.message); setLoadingMore(false); }
       }); }, 250);
     return () => { active = false; clearTimeout(start); clearTimeout(timeout); controller.abort(); };
-  }, [token, revision, refresh, searchQuery]);
+  }, [token, revision, refresh, searchQuery, sort, shuffleSeed]);
 
   async function loadMore() {
     if (moreBusy.current || archive?.nextOffset == null) return;
@@ -156,6 +158,11 @@ export function MemoriesArchive({ token, revision }: { token: string; revision: 
       <label htmlFor="archive-search">Zoek op context of fotograaf</label>
       <div><input id="archive-search" type="search" inputMode="search" maxLength={100} value={search} placeholder="Bijvoorbeeld Gent, Bas of Willem" onChange={(event) => { const value = event.target.value; if (value.trim() !== searchQuery) { setArchive(null); setError(""); } setSearch(value); }} />{search && <button type="button" onClick={() => { setSearch(""); setArchive(null); setError(""); }}>Wis zoekopdracht</button>}</div>
     </form>
+    <div className={styles.sortControls}>
+      <label htmlFor="archive-sort">Sorteer op<select id="archive-sort" value={sort} onChange={(event) => { setSort(event.target.value); if (event.target.value === "shuffle") setShuffleSeed(Array.from(crypto.getRandomValues(new Uint8Array(12)), (byte) => byte.toString(16).padStart(2, "0")).join("")); setArchive(null); setError(""); }}><option value="latest">Laatst toegevoegd</option><option value="date">Datum van de foto</option><option value="shuffle">Shuffle</option></select></label>
+      {sort === "shuffle" && <button type="button" onClick={() => { setShuffleSeed(Array.from(crypto.getRandomValues(new Uint8Array(12)), (byte) => byte.toString(16).padStart(2, "0")).join("")); setArchive(null); setError(""); }}>Opnieuw shuffelen ↻</button>}
+      {sort === "date" && <p>Nieuwste fotodatum eerst. Foto’s zonder datum staan onderaan.</p>}
+    </div>
     <div role="status" aria-live="polite">{error ? <p className={styles.error}>{error} <button type="button" onClick={() => setRefresh((value) => value + 1)}>Opnieuw proberen</button></p> : !archive ? <p>{searchQuery ? "Even zoeken in het hele archief…" : "Even het bewijsmateriaal ophalen…"}</p> : <p className={styles.count}>{archive.total} foto{archive.total === 1 ? "" : "’s"} {searchQuery ? `gevonden voor “${searchQuery}”` : "in het archief"}</p>}</div>
     {archive?.photos.length === 0 && <div className={styles.empty}><p>{searchQuery ? "Geen foto’s gevonden." : "Nog geen bewijsmateriaal."}</p><span>{searchQuery ? "Probeer een andere plaats, naam of een stukje van het verhaal." : "Wie durft de eerste foto in te sturen?"}</span>{!searchQuery && <a href="#upload-title">Foto’s toevoegen ↓</a>}</div>}
     {!!archive?.photos.length && <ul className={styles.grid}>{archive.photos.map((photo) => <PhotoCard key={`${photo.id}-${photo.url}`} photo={photo} token={token} onUpdate={(updated) => setArchive((current) => current ? { ...current, photos: current.photos.map((item) => item.id === updated.id ? { ...item, ...updated } : item) } : current)} />)}</ul>}

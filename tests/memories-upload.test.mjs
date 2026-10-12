@@ -50,9 +50,9 @@ function fixture(options = {}) {
     is(...args) { calls.push(["is", ...args]); return this; },
     is(...args) { calls.push(["is", ...args]); return this; },
     select() { return this; }, eq(...args) { calls.push(["eq", ...args]); return this; },
-    order() { return this; },
+    order(...args) { calls.push(["order", ...args]); return this; },
     or(filter) { calls.push(["search", filter]); return this; },
-    range: async (from, to) => { calls.push(["range", from, to]); return { data: options.rows ?? [], count: options.total ?? 0, error: null }; },
+    range: async (from, to) => { calls.push(["range", from, to]); return { data: options.paginateRows ? (options.rows ?? []).slice(from, to + 1) : options.rows ?? [], count: options.total ?? 0, error: null }; },
     maybeSingle: async () => {
       if (updating) { updating = false; return { data: options.updateMissing ? null : { id: "12345678-1234-1234-1234-123456789abc", name: "Photographer", message: "Context" }, error: options.updateError ? { code: "failure" } : null }; }
       return { data: options.photoMissing ? null : { id: "12345678-1234-1234-1234-123456789abc", path: "private/photo.jpg", size: 120, status: "pending", name: "Other editor", message: "Latest context" }, error: null };
@@ -75,7 +75,7 @@ function fixture(options = {}) {
     memoriesLinkHash: () => "a".repeat(64), memoriesClient: () => ({ storage, from: () => query }),
   };
   const { POST, GET, PATCH } = load("app/api/memories/route.ts", { "@/lib/memories/files": files, "@/lib/memories/server": server });
-  return { calls, edit: (body, token = "valid") => PATCH(new Request("https://example.com/api/memories", { method: "PATCH", headers: { authorization: `Bearer ${token}` }, body: JSON.stringify(body) })), get: (token = "valid", offset = "0", search = "") => GET(new Request(`https://example.com/api/memories?offset=${offset}&search=${encodeURIComponent(search)}`, { headers: { authorization: `Bearer ${token}` } })), run: (body, token = "valid") => POST(new Request("https://example.com/api/memories", {
+  return { calls, edit: (body, token = "valid") => PATCH(new Request("https://example.com/api/memories", { method: "PATCH", headers: { authorization: `Bearer ${token}` }, body: JSON.stringify(body) })), get: (token = "valid", offset = "0", search = "", sort = "latest", seed = "") => GET(new Request(`https://example.com/api/memories?offset=${offset}&search=${encodeURIComponent(search)}&sort=${sort}&seed=${seed}`, { headers: { authorization: `Bearer ${token}` } })), run: (body, token = "valid") => POST(new Request("https://example.com/api/memories", {
     method: "POST", headers: { authorization: `Bearer ${token}` }, body: JSON.stringify(body),
   })) };
 }
@@ -205,4 +205,35 @@ test("confirmation checks invitation ownership and actual size", async () => {
   assert.ok(f.calls.some(([name, field]) => name === "eq" && field === "link_hash"));
   assert.ok(!f.calls.some(([name]) => name === "update"));
   assert.equal((await fixture().run(body)).status, 200);
+});
+
+test("archive date ordering puts partial and unknown dates last with stable tie breakers", async () => {
+  const f = fixture();
+  assert.equal((await f.get("valid","0","Gent","date")).status,200);
+  assert.deepEqual(f.calls.filter(([name])=>name==="order"),[
+    ["order","photo_year",{ascending:false,nullsFirst:false}],
+    ["order","photo_month",{ascending:false,nullsFirst:false}],
+    ["order","photo_day",{ascending:false,nullsFirst:false}],
+    ["order","created_at",{ascending:false}], ["order","id",{ascending:false}],
+  ]);
+});
+
+test("shuffle spans the complete archive and paginates a repeatable seeded order", async () => {
+  const rows = Array.from({length:1003},(_,i)=>({id:String(i),path:`private/${i}.jpg`}));
+  const f = fixture({rows,total:rows.length,paginateRows:true});
+  const page = async(offset,seed)=> (await (await f.get("valid",String(offset),"Gent","shuffle",seed)).json());
+  const first = await page(0,"seed-one");
+  const second = await page(24,"seed-one");
+  const repeat = await page(0,"seed-one");
+  const fresh = await page(0,"seed-two");
+  assert.equal(first.total,1003);
+  assert.equal(first.photos.length,24);
+  assert.equal(first.nextOffset,24);
+  assert.deepEqual(first.photos.map(p=>p.id),repeat.photos.map(p=>p.id));
+  assert.notDeepEqual(first.photos.map(p=>p.id),fresh.photos.map(p=>p.id));
+  assert.equal(new Set([...first.photos,...second.photos].map(p=>p.id)).size,48);
+  assert.ok(f.calls.some(([name,from,to])=>name==="range"&&from===1000&&to===1999));
+  assert.ok(f.calls.filter(([name])=>name==="signed-read").every(call=>call[1].length===24));
+  assert.equal((await fixture().get("valid","0","","shuffle","bad")).status,400);
+  assert.equal((await fixture().get("valid","0","","unexpected")).status,400);
 });
