@@ -153,7 +153,7 @@ export function MemoriesArchive({ token, revision }: { token: string; revision: 
   }
 
   return <section id="archief" className={styles.archive} aria-labelledby="archive-title">
-    <div className={styles.heading}><div><p className={styles.eyebrow}>Het gedeelde fotoarchief</p><h2 id="archive-title">Dit leek toen een goed idee.</h2><p>Tik op een foto voor het verhaal. Iedereen met de link kan context en fotograaf aanvullen.</p></div><button type="button" onClick={() => setRefresh((value) => value + 1)}>Vernieuwen ↻</button></div>
+    <div className={styles.heading}><div><p className={styles.eyebrow}>Het gedeelde fotoarchief</p><h2 id="archive-title">Met context!</h2><p>Tik op een foto voor het verhaal. Iedereen met de link kan context en fotograaf aanvullen.</p></div><button type="button" onClick={() => setRefresh((value) => value + 1)}>Vernieuwen ↻</button></div>
     <form className={styles.search} role="search" onSubmit={(event) => { event.preventDefault(); setRefresh((value) => value + 1); }}>
       <label htmlFor="archive-search">Zoek op context of fotograaf</label>
       <div><input id="archive-search" type="search" inputMode="search" maxLength={100} value={search} placeholder="Bijvoorbeeld Gent, Bas of Willem" onChange={(event) => { const value = event.target.value; if (value.trim() !== searchQuery) { setArchive(null); setError(""); } setSearch(value); }} />{search && <button type="button" onClick={() => { setSearch(""); setArchive(null); setError(""); }}>Wis zoekopdracht</button>}</div>
