@@ -2,7 +2,7 @@
 /* The featured video stays interactive; only the rear card is decorative. */
 .friends { margin: -6px 0 20px; font-size: 18px; line-height: 1.5; color: #657166; }
 .art { height: 380px; }
-.backCard { padding-top: 0; }
+.backCard { padding-top: 0; height: auto; background: #fffdf8; }
 .featuredPhoto { display: block; width: 100%; height: 196px; object-fit: cover; object-position: center 75%; }
 .backCard:not(:has(.featuredPhoto)) { padding-top: 195px; }
 .frontCard { margin: 0; height: auto; min-height: 250px; top: 95px; }
