@@ -17,7 +17,8 @@ export async function POST(request: Request) {
   try {
     const auth = await memoriesAuthClient();
     if (body.action === "logout") {
-      await auth.auth.signOut({ scope: "local" });
+      const { error: logoutError } = await auth.auth.signOut({ scope: "local" });
+      if (logoutError) return reply({ error: "Uitloggen is niet gelukt. Probeer het opnieuw." }, 503);
       return reply({ signedOut: true });
     }
     const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";

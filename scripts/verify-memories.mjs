@@ -33,8 +33,8 @@ async function edit(body, bearer = token) {
 }
 
 try {
-  const page = await fetch(`${origin}/herinneringen/${token}`);
-  assert.equal(page.status, 200, "Invitation should load");
+  const page = await fetch(`${origin}/herinneringen`);
+  assert.equal(page.status, 200, "Account login page should load");
   assert.ok(!(await page.text()).includes(process.env.MEMORIES_SUPABASE_SECRET_KEY), "Server key must not appear in HTML");
   assert.equal((await api({ action: "prepare" }, "invalid")).status, 401);
   const prepare = await api({ action: "prepare", filename: "integration-check.png", type: "image/png", size: bytes.length, name: "Integration check", message: "Temporary test, automatically removed.", photo_year: 2022 });
