@@ -163,7 +163,7 @@ test("archive includes completed photos across invitations, with account-only UR
 test("archive paginates and handles an empty collection", async () => {
   const rows = Array.from({ length: 24 }, (_, index) => ({ id: String(index), path: `photo${index}.jpg` }));
   assert.equal((await (await fixture({ rows, total: 25 }).get()).json()).nextOffset, 24);
-  assert.deepEqual(await (await fixture().get()).json(), { photos: [], total: 0, nextOffset: null });
+  assert.deepEqual(await (await fixture().get()).json(), { photos: [], owner: false, total: 0, nextOffset: null });
 });
 test("public buckets and malformed metadata cannot create signed URLs", async () => {
   const f = fixture({ public: true });

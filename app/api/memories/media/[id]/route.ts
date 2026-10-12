@@ -5,7 +5,8 @@ export const runtime = "nodejs";
 const privateHeaders = { "Cache-Control": "private, no-store", "X-Content-Type-Options": "nosniff", "Referrer-Policy": "no-referrer" };
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  if (!await memoriesAccountAccess()) return new Response(null, { status: 403, headers: privateHeaders });
+  const account = await memoriesAccountAccess();
+  if (!account) return new Response(null, { status: 403, headers: privateHeaders });
   const { id } = await params;
   const client = memoriesClient();
   let bucket = MEMORIES_BUCKET;
@@ -14,7 +15,9 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   else if (id === "featured-photo") path = "featured/friends-2026-10-12.jpeg";
   else {
     if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) return new Response(null, { status: 404, headers: privateHeaders });
-    const { data, error } = await client.from("memories_uploads").select("path").eq("id", id).eq("status", "complete").maybeSingle();
+    let query = client.from("memories_uploads").select("path").eq("id", id).eq("status", "complete");
+    if (account.role !== "owner") query = query.is("deleted_at", null);
+    const { data, error } = await query.maybeSingle();
     if (error || !data) return new Response(null, { status: 404, headers: privateHeaders });
     path = data.path;
   }

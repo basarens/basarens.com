@@ -17,6 +17,8 @@ export async function GET(request: Request) {
   const offsetText = new URL(request.url).searchParams.get("offset") ?? "0";
   if (!/^\d{1,8}$/.test(offsetText)) return reply({ error: "Ongeldige archiefpagina." }, 400);
   const offset = Number(offsetText);
+  const trash = new URL(request.url).searchParams.get("trash") === "true";
+  if (trash && account.role !== "owner") return reply({ error: "Alleen Bas kan de prullenbak bekijken." }, 403);
   const search = (new URL(request.url).searchParams.get("search") ?? "").trim();
   if (search.length > 100) return reply({ error: "Gebruik maximaal 100 tekens om te zoeken." }, 400);
   const sort = new URL(request.url).searchParams.get("sort") ?? "latest";
@@ -29,8 +31,9 @@ export async function GET(request: Request) {
     // The current invitation grants access to the entire completed archive,
     // including photos sent through previous invitations. Never show pending uploads.
     let query = client.from("memories_uploads")
-      .select("id,path,filename,name,message,photo_year,photo_month,photo_day,created_at", { count: "exact" })
+      .select("id,path,filename,name,message,photo_year,photo_month,photo_day,created_at,memories_removal_votes(user_id,memories_members(active))", { count: "exact" })
       .eq("status", "complete");
+    query = trash ? query.not("deleted_at", "is", null) : query.is("deleted_at", null);
     if (search) query = query.or(archiveSearchFilter(search));
     let result;
     if (sort === "shuffle") {
@@ -53,8 +56,14 @@ export async function GET(request: Request) {
     }
     const { data: rows, count, error } = result;
     if (error || !rows) return reply({ error: "Het archief kon niet worden geladen. Probeer opnieuw." }, 503);
-    const photos = rows.map(({ id, filename, name, message, photo_year, photo_month, photo_day, created_at }) => ({ id, filename, name, message, photo_year, photo_month, photo_day, created_at, url: `/api/memories/media/${id}` }));
-    return reply({ photos, total: count ?? photos.length, nextOffset: offset + rows.length < (count ?? 0) ? offset + rows.length : null });
+    const photos = rows.map(({ id, filename, name, message, photo_year, photo_month, photo_day, created_at, memories_removal_votes }) => {
+      const votes = (memories_removal_votes ?? []).filter((vote) => {
+        const member = vote.memories_members as unknown as { active: boolean } | { active: boolean }[] | null;
+        return Array.isArray(member) ? member.some((entry) => entry.active) : member?.active;
+      });
+      return { id, filename, name, message, photo_year, photo_month, photo_day, created_at, votes: votes.length, voted: votes.some((vote) => vote.user_id === account.userId), url: `/api/memories/media/${id}` };
+    });
+    return reply({ photos, owner: account.role === "owner", total: count ?? photos.length, nextOffset: offset + rows.length < (count ?? 0) ? offset + rows.length : null });
   } catch {
     return reply({ error: "Het archief is tijdelijk niet beschikbaar. Probeer opnieuw." }, 503);
   }
@@ -86,7 +95,7 @@ export async function PATCH(request: Request) {
     // Compare-and-update in one query: another visitor's edit must not be overwritten.
     let update = client.from("memories_uploads")
       .update({ name: body.name.trim(), message: body.message.trim(), edited_by: account.userId, ...(editsDate ? date : {}) })
-      .eq("id", body.id).eq("status", "complete")
+      .eq("id", body.id).eq("status", "complete").is("deleted_at", null)
       .eq("name", body.previousName).eq("message", body.previousMessage);
     if (editsDate && previousDate) {
       for (const [field, value] of Object.entries(previousDate)) update = value === null ? update.is(field, null) : update.eq(field, value);
@@ -95,7 +104,7 @@ export async function PATCH(request: Request) {
     if (error) return reply({ error: "Opslaan is niet gelukt. Probeer opnieuw." }, 503);
     if (!data) {
       const { data: current, error: currentError } = await client.from("memories_uploads")
-        .select("id,name,message,photo_year,photo_month,photo_day").eq("id", body.id).eq("status", "complete").maybeSingle();
+        .select("id,name,message,photo_year,photo_month,photo_day").eq("id", body.id).eq("status", "complete").is("deleted_at", null).maybeSingle();
       if (currentError) return reply({ error: "Opslaan is niet gelukt. Probeer opnieuw." }, 503);
       if (!current) return reply({ error: "Deze foto is niet beschikbaar." }, 404);
       return reply({ error: "Iemand heeft deze foto ondertussen aangepast. Bekijk eerst de nieuwste context.", current }, 409);

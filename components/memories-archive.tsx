@@ -5,12 +5,12 @@ import styles from "./memories-archive.module.css";
 import { EMPTY_PHOTO_DATE, formatPhotoDate, readPhotoDate, type PhotoDate } from "@/lib/memories/files";
 import { MemoriesDateFields } from "./memories-date-fields";
 
-type ArchivePhoto = PhotoDate & { id: string; filename: string; name: string; message: string; created_at: string; url: string | null };
-type ArchivePage = { photos: ArchivePhoto[]; total: number; nextOffset: number | null };
+type ArchivePhoto = PhotoDate & { id: string; filename: string; name: string; message: string; created_at: string; url: string | null; votes: number; voted: boolean };
+type ArchivePage = { photos: ArchivePhoto[]; total: number; nextOffset: number | null; owner: boolean };
 
 type PhotoContext = Pick<ArchivePhoto, "id" | "name" | "message" | "photo_year" | "photo_month" | "photo_day">;
 
-function PhotoCard({ photo, onUpdate }: { photo: ArchivePhoto; onUpdate: (photo: PhotoContext) => void }) {
+function PhotoCard({ photo, onUpdate, trash, onRemoval }: { photo: ArchivePhoto; onUpdate: (photo: PhotoContext) => void; trash: boolean; onRemoval: () => void }) {
   const [failed, setFailed] = useState(false);
   const [flipped, setFlipped] = useState(false);
   const [editing, setEditing] = useState(false);
@@ -37,6 +37,18 @@ function PhotoCard({ photo, onUpdate }: { photo: ArchivePhoto; onUpdate: (photo:
     setPhotoDate(date);
     setBaseline({ name: photo.name, message: photo.message, date });
     setNotice(""); setError(""); setConflict(null); setEditing(true);
+  }
+  async function removal() {
+    if (saving.current) return;
+    saving.current = true; setBusy(true); setError(""); setNotice("");
+    try {
+      const response = await fetch("/api/memories/removal", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: photo.id, action: trash ? "restore" : photo.voted ? "withdraw" : "vote" }), signal: AbortSignal.timeout(30000) });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "De wijziging is niet gelukt.");
+      setNotice(data.voted ? "Je verwijderstem is opgeslagen." : "Opgeslagen.");
+      onRemoval();
+    } catch (reason) { setError(reason instanceof Error ? reason.message : "Probeer opnieuw."); }
+    finally { saving.current = false; setBusy(false); }
   }
   async function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -89,8 +101,9 @@ function PhotoCard({ photo, onUpdate }: { photo: ArchivePhoto; onUpdate: (photo:
           <p className={styles.fieldLabel}>Fotograaf</p><p className={styles.author}>{photo.name || "Nog onbekend. Weet jij wie het was?"}</p>
           <p className={styles.fieldLabel}>Context</p><p className={styles.contextStory}>{photo.message || "Hier ontbreekt het verhaal nog. Vul jij het aan?"}</p>
           <p className={styles.fieldLabel}>Datum van de foto</p><p className={styles.author}>{formatPhotoDate(readPhotoDate(photo) ?? EMPTY_PHOTO_DATE)}</p>
-          <button className={styles.editButton} type="button" onClick={edit}>Context, fotograaf of datum aanpassen</button>
+          {!trash && <button className={styles.editButton} type="button" disabled={busy} onClick={edit}>Context, fotograaf of datum aanpassen</button>}
         </div>}
+        {!editing && <div className={styles.removal}><p>{trash ? "Verwijderd uit het archief. Alleen Bas kan deze foto nog zien en terugzetten." : `${photo.votes ?? 0}/2 verwijderstemmen. Bij twee verschillende accounts gaat deze foto uit het archief.`}</p><button type="button" disabled={busy} aria-pressed={!trash && photo.voted} onClick={removal}>{busy ? "Even opslaan…" : trash ? "Foto terugzetten" : photo.voted ? "Mijn verwijderstem intrekken" : "Stem om te verwijderen"}</button></div>}
         <div className={styles.feedback} aria-live="polite" role="status">{error && <p className={styles.cardError}>{error}</p>}{notice && <p>{notice}</p>}{conflict && <button type="button" onClick={() => { onUpdate(conflict); setConflict(null); setError(""); setEditing(false); setNotice("Dit is de nieuwste context. Je kunt opnieuw aanpassen."); }}>Nieuwste context bekijken</button>}</div>
         {!editing && <div className={styles.details}><span>Ingestuurd {new Date(photo.created_at).toLocaleDateString("nl-NL", { timeZone: "Europe/Amsterdam", day: "numeric", month: "short", year: "numeric" })}</span>{photo.url && <a href={photo.url} target="_blank" rel="noreferrer">Originele foto ↗</a>}</div>}
       </div>
@@ -105,13 +118,14 @@ export function MemoriesArchive({ revision }: { revision: number }) {
   const [refresh, setRefresh] = useState(0);
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState("latest");
+  const [trash, setTrash] = useState(false);
   const [shuffleSeed, setShuffleSeed] = useState("");
   const searchQuery = search.trim();
   const generation = useRef(0);
   const moreBusy = useRef(false);
 
   async function fetchPage(offset: number, signal?: AbortSignal): Promise<ArchivePage> {
-    const response = await fetch(`/api/memories?offset=${offset}&search=${encodeURIComponent(searchQuery)}&sort=${sort}&seed=${shuffleSeed}`, {
+    const response = await fetch(`/api/memories?offset=${offset}&search=${encodeURIComponent(searchQuery)}&sort=${sort}&seed=${shuffleSeed}&trash=${trash}`, {
       cache: "no-store",
       signal: signal ?? AbortSignal.timeout(30000),
     });
@@ -126,7 +140,7 @@ export function MemoriesArchive({ revision }: { revision: number }) {
     const timeout = setTimeout(() => controller.abort(), 30000);
     const current = ++generation.current;
     moreBusy.current = false;
-    const start = setTimeout(() => { fetch(`/api/memories?offset=0&search=${encodeURIComponent(searchQuery)}&sort=${sort}&seed=${shuffleSeed}`, { cache: "no-store", signal: controller.signal })
+    const start = setTimeout(() => { fetch(`/api/memories?offset=0&search=${encodeURIComponent(searchQuery)}&sort=${sort}&seed=${shuffleSeed}&trash=${trash}`, { cache: "no-store", signal: controller.signal })
       .then(async (response) => {
         const data = await response.json();
         if (!response.ok) throw new Error(data.error || "Het archief kon niet worden geladen.");
@@ -136,7 +150,7 @@ export function MemoriesArchive({ revision }: { revision: number }) {
         if (active && current === generation.current) { setError(reason.name === "AbortError" ? "Het laden duurt te lang. Probeer opnieuw." : reason.message); setLoadingMore(false); }
       }); }, 250);
     return () => { active = false; clearTimeout(start); clearTimeout(timeout); controller.abort(); };
-  }, [revision, refresh, searchQuery, sort, shuffleSeed]);
+  }, [revision, refresh, searchQuery, sort, shuffleSeed, trash]);
 
   async function loadMore() {
     if (moreBusy.current || archive?.nextOffset == null) return;
@@ -156,7 +170,8 @@ export function MemoriesArchive({ revision }: { revision: number }) {
   }
 
   return <section id="archief" className={styles.archive} aria-labelledby="archive-title">
-    <div className={styles.heading}><div><p className={styles.eyebrow}>Het gedeelde fotoarchief</p><h2 id="archive-title">Met context!</h2><p>Tik op een foto voor het verhaal. Goedgekeurde vrienden kunnen context, fotograaf en datum aanvullen.</p></div><button type="button" onClick={() => setRefresh((value) => value + 1)}>Vernieuwen ↻</button></div>
+    {(archive?.owner || trash) && <button type="button" onClick={() => { setTrash(!trash); setArchive(null); setError(""); }}>{trash ? "Terug naar het archief" : "Prullenbak bekijken"}</button>}
+    <div className={styles.heading}><div><p className={styles.eyebrow}>Het gedeelde fotoarchief</p><h2 id="archive-title">{trash ? "Prullenbak" : "Met context!"}</h2><p>{trash ? "Deze foto's zijn uit het gedeelde archief gehaald. Draai een foto om om deze terug te zetten." : "Tik op een foto voor het verhaal. Goedgekeurde vrienden kunnen context, fotograaf en datum aanvullen."}</p></div><button type="button" onClick={() => setRefresh((value) => value + 1)}>Vernieuwen ↻</button></div>
     <form className={styles.search} role="search" onSubmit={(event) => { event.preventDefault(); setRefresh((value) => value + 1); }}>
       <label htmlFor="archive-search">Zoek op context of fotograaf</label>
       <div><input id="archive-search" type="search" inputMode="search" maxLength={100} value={search} placeholder="Bijvoorbeeld Gent, Bas of Willem" onChange={(event) => { const value = event.target.value; if (value.trim() !== searchQuery) { setArchive(null); setError(""); } setSearch(value); }} />{search && <button type="button" onClick={() => { setSearch(""); setArchive(null); setError(""); }}>Wis zoekopdracht</button>}</div>
@@ -167,8 +182,8 @@ export function MemoriesArchive({ revision }: { revision: number }) {
       {sort === "date" && <p>Nieuwste fotodatum eerst. Foto’s zonder datum staan onderaan.</p>}
     </div>
     <div role="status" aria-live="polite">{error ? <p className={styles.error}>{error} <button type="button" onClick={() => setRefresh((value) => value + 1)}>Opnieuw proberen</button></p> : !archive ? <p>{searchQuery ? "Even zoeken in het hele archief…" : "Even het bewijsmateriaal ophalen…"}</p> : <p className={styles.count}>{archive.total} foto{archive.total === 1 ? "" : "’s"} {searchQuery ? `gevonden voor “${searchQuery}”` : "in het archief"}</p>}</div>
-    {archive?.photos.length === 0 && <div className={styles.empty}><p>{searchQuery ? "Geen foto’s gevonden." : "Nog geen bewijsmateriaal."}</p><span>{searchQuery ? "Probeer een andere plaats, naam of een stukje van het verhaal." : "Wie durft de eerste foto in te sturen?"}</span>{!searchQuery && <a href="#upload-title">Foto’s toevoegen ↓</a>}</div>}
-    {!!archive?.photos.length && <ul className={styles.grid}>{archive.photos.map((photo) => <PhotoCard key={`${photo.id}-${photo.url}`} photo={photo} onUpdate={(updated) => setArchive((current) => current ? { ...current, photos: current.photos.map((item) => item.id === updated.id ? { ...item, ...updated } : item) } : current)} />)}</ul>}
+    {archive?.photos.length === 0 && <div className={styles.empty}><p>{searchQuery ? "Geen foto’s gevonden." : trash ? "De prullenbak is leeg." : "Nog geen bewijsmateriaal."}</p><span>{searchQuery ? "Probeer een andere plaats, naam of een stukje van het verhaal." : trash ? "Bij twee verwijderstemmen verschijnt de foto hier." : "Wie durft de eerste foto in te sturen?"}</span>{!searchQuery && !trash && <a href="#upload-title">Foto’s toevoegen ↓</a>}</div>}
+    {!!archive?.photos.length && <ul className={styles.grid}>{archive.photos.map((photo) => <PhotoCard key={`${photo.id}-${photo.url}`} photo={photo} trash={trash} onRemoval={() => setRefresh((value) => value + 1)} onUpdate={(updated) => setArchive((current) => current ? { ...current, photos: current.photos.map((item) => item.id === updated.id ? { ...item, ...updated } : item) } : current)} />)}</ul>}
     {archive?.nextOffset != null && <button className={styles.more} type="button" disabled={loadingMore} onClick={loadMore}>{loadingMore ? "Even ophalen…" : "Meer foto’s bekijken ↓"}</button>}
   </section>;
 }

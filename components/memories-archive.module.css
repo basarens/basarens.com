@@ -59,3 +59,4 @@
 .search input { width: 100%; max-width: 620px; min-width: 0; padding: 14px 16px; border: 1px solid #29392e30; border-radius: 8px; background: #fffdf8; color: #29392e; font: inherit; font-size: 14px; }
 .search input:focus-visible { outline: 3px solid #bb6046; outline-offset: 2px; }
 @media (max-width: 480px) { .search > div { flex-wrap: wrap; } .search input { font-size: 16px; } }
+.removal{border-top:1px solid #29392e20;margin-top:16px;padding-top:10px}.removal p{font-size:11px;line-height:1.6;color:#69796a}.archive .removal button{white-space:normal;color:#a34e3b;width:100%}

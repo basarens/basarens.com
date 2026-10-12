@@ -35,3 +35,7 @@ Zoeken op context of fotograaf en sorteren op laatst toegevoegd, fotodatum of sh
 De integratiecontrole `node scripts/verify-memories.mjs` (of `--live`) vereist een goedgekeurde sessie via MEMORIES_TEST_COOKIE of `.private/memories-test-cookie.txt`. De controle gebruikt uitsluitend één eigen tijdelijke testfoto en verwijdert die daarna. Bewaar testcookies nooit in Git en verwijder ze na de controle.
 
 Voeg vrienden alleen na expliciete toestemming toe. Geef de eigenaar de rol owner; vrienden krijgen friend. Trek toegang in door active op false te zetten. Bewaar daarnaast een afzonderlijke back-up: dit archief vervangt geen fotoback-up. De openbare broncode mag geen persoonlijke e-mailadressen, credentials of media bevatten.
+
+## Verwijderstemmen
+Voer supabase/memories-removal-votes.sql uit. Twee actieve, verschillende accounts stemmen een foto naar de prullenbak. Dezelfde account telt maar eenmaal en kan een stem intrekken zolang de foto zichtbaar is. De bewerking vergrendelt de foto tijdens stemmen en herstellen, zodat gelijktijdige stemmen goed tellen. Alleen de eigenaar ziet de prullenbak, kan de originele bestanden daarvan ophalen en terugzetten; herstellen wist de stemmen. Bestanden blijven privaat bewaard en worden niet fysiek gewist. Eerder geladen beelden kunnen nog op een toestel staan.
+
