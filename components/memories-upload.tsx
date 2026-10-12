@@ -154,7 +154,7 @@ export function MemoriesUpload({ configured, viewerName, featuredVideoUrl, featu
           <div className={styles.panelHeading}><div><p className={styles.eyebrow}>Tijd om je camerarol door te spitten</p><h2 id="upload-title">Heb jij nog bewijsmateriaal?</h2></div><span>Alleen voor onze vrienden</span></div>
           {!configured && <p className={styles.warning} role="status">Het insturen staat nog niet aan. Je kunt alvast foto’s kiezen, maar ze worden nog niet opgeslagen. Kom later terug om ze te versturen.</p>}
           <div className={styles.dropzone} onDragOver={(event) => event.preventDefault()} onDrop={(event) => { event.preventDefault(); selectFiles(event.dataTransfer.files); }}>
-            <span className={styles.plus} aria-hidden="true">＋</span><h3>Ja, ook die ene foto.</h3><p>Kies foto’s op je telefoon, of sleep ze hierheen.</p>
+            <button className={styles.plus} type="button" aria-label="Foto’s toevoegen" disabled={busy} onClick={() => inputRef.current?.click()}><span aria-hidden="true">＋</span></button><h3>Ja, ook die ene foto.</h3><p>Kies foto’s op je telefoon, of sleep ze hierheen.</p>
             <button className={styles.choose} type="button" disabled={busy} onClick={() => inputRef.current?.click()}>Foto’s kiezen <span aria-hidden="true">↗</span></button>
             <input ref={inputRef} type="file" multiple accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif" hidden onChange={(event) => selectFiles(event.target.files)} />
             <small>JPG, PNG, WEBP of HEIC · max. 20 MB per foto · 20 tegelijk</small>
