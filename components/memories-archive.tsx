@@ -88,8 +88,8 @@ function PhotoCard({ photo, onUpdate, trash, onRemoval }: { photo: ArchivePhoto;
             <span className={styles.frontMeta}><span>{formatPhotoDate(readPhotoDate(photo) ?? EMPTY_PHOTO_DATE)}</span><span aria-hidden="true">↻</span></span>
           </span>
         </button>
-        {!trash && <button className={styles.frontVote} type="button" disabled={busy} aria-pressed={photo.voted} aria-label={`${photo.voted ? "Mijn verwijderstem intrekken" : "Stem om te verwijderen"}: ${photo.votes ?? 0} van 2 stemmen`} title="Bij twee verschillende accounts gaat deze foto naar de prullenbak" onClick={removal}>{busy ? "Opslaan…" : photo.voted ? "Intrekken" : "Verwijderstem"} · {photo.votes ?? 0}/2</button>}
-        {!trash && (error || notice) && <div className={styles.frontFeedback} role="status" aria-live="polite">{error || notice}</div>}
+        {!trash && (photo.votes ?? 0) > 0 && <button className={styles.frontVote} type="button" disabled={busy} aria-pressed={photo.voted} aria-label={`${photo.voted ? "Mijn verwijderstem intrekken" : "Stem om te verwijderen"}: ${photo.votes ?? 0} van 2 stemmen`} title="Bij twee verschillende accounts gaat deze foto naar de prullenbak" onClick={removal}>{busy ? "Opslaan…" : photo.voted ? "Intrekken" : "Verwijderstem"} · {photo.votes ?? 0}/2</button>}
+        {!trash && (photo.votes ?? 0) > 0 && (error || notice) && <div className={styles.frontFeedback} role="status" aria-live="polite">{error || notice}</div>}
       </div>
       <div className={`${styles.face} ${styles.back}`} inert={!flipped} aria-hidden={!flipped}>
         <div className={styles.backHeading}><span>Het verhaal achter de foto</span><button ref={backButton} type="button" disabled={busy} onClick={() => flip(false)}>Foto ↻</button></div>
