@@ -25,3 +25,4 @@
   .shell { max-width: 1680px; padding-inline: 48px; }
   .intro, .panel { max-width: 1048px; margin-inline: auto; }
 }
+.accountButton { border: 1px solid #29392e30; border-radius: 30px; background: transparent; color: #29392e; padding: 10px 14px; min-height: 44px; font: inherit; font-size: 11px; cursor: pointer; }

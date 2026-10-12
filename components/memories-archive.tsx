@@ -10,7 +10,7 @@ type ArchivePage = { photos: ArchivePhoto[]; total: number; nextOffset: number |
 
 type PhotoContext = Pick<ArchivePhoto, "id" | "name" | "message" | "photo_year" | "photo_month" | "photo_day">;
 
-function PhotoCard({ photo, token, onUpdate }: { photo: ArchivePhoto; token: string; onUpdate: (photo: PhotoContext) => void }) {
+function PhotoCard({ photo, onUpdate }: { photo: ArchivePhoto; onUpdate: (photo: PhotoContext) => void }) {
   const [failed, setFailed] = useState(false);
   const [flipped, setFlipped] = useState(false);
   const [editing, setEditing] = useState(false);
@@ -45,7 +45,7 @@ function PhotoCard({ photo, token, onUpdate }: { photo: ArchivePhoto; token: str
     saving.current = true; setBusy(true); setError(""); setNotice("");
     try {
       const response = await fetch("/api/memories", {
-        method: "PATCH", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        method: "PATCH", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id: photo.id, name, message, ...photoDate, previousDate: baseline.date, previousName: baseline.name, previousMessage: baseline.message }),
         signal: AbortSignal.timeout(30000),
       });
@@ -83,7 +83,7 @@ function PhotoCard({ photo, token, onUpdate }: { photo: ArchivePhoto; token: str
           <label htmlFor={`photographer-${photo.id}`}>Fotograaf<input id={`photographer-${photo.id}`} value={name} maxLength={80} disabled={busy} placeholder="Wie maakte deze foto?" onChange={(event) => setName(event.target.value)} /></label>
           <label htmlFor={`context-${photo.id}`}>Context<textarea id={`context-${photo.id}`} value={message} maxLength={1200} disabled={busy} rows={4} placeholder="Waar was dit? Wat gebeurde er?" onChange={(event) => setMessage(event.target.value)} /></label>
           <MemoriesDateFields value={photoDate} onChange={setPhotoDate} disabled={busy} />
-          <p className={styles.editNote}>Wijzigingen zijn zichtbaar voor iedereen met de link.</p>
+          <p className={styles.editNote}>Wijzigingen zijn zichtbaar voor alle goedgekeurde vrienden.</p>
           <div className={styles.editActions}><button className={styles.saveButton} type="submit" disabled={busy || !!conflict}>{busy ? "Opslaan…" : "Opslaan"}</button><button type="button" disabled={busy} onClick={() => { setEditing(false); setError(""); setConflict(null); }}>Annuleren</button></div>
         </form> : <div className={styles.contextRead}>
           <p className={styles.fieldLabel}>Fotograaf</p><p className={styles.author}>{photo.name || "Nog onbekend. Weet jij wie het was?"}</p>
@@ -98,7 +98,7 @@ function PhotoCard({ photo, token, onUpdate }: { photo: ArchivePhoto; token: str
   </li>;
 }
 
-export function MemoriesArchive({ token, revision }: { token: string; revision: number }) {
+export function MemoriesArchive({ revision }: { revision: number }) {
   const [archive, setArchive] = useState<ArchivePage | null>(null);
   const [error, setError] = useState("");
   const [loadingMore, setLoadingMore] = useState(false);
@@ -112,7 +112,7 @@ export function MemoriesArchive({ token, revision }: { token: string; revision: 
 
   async function fetchPage(offset: number, signal?: AbortSignal): Promise<ArchivePage> {
     const response = await fetch(`/api/memories?offset=${offset}&search=${encodeURIComponent(searchQuery)}&sort=${sort}&seed=${shuffleSeed}`, {
-      headers: { Authorization: `Bearer ${token}` }, cache: "no-store",
+      cache: "no-store",
       signal: signal ?? AbortSignal.timeout(30000),
     });
     const data = await response.json();
@@ -126,7 +126,7 @@ export function MemoriesArchive({ token, revision }: { token: string; revision: 
     const timeout = setTimeout(() => controller.abort(), 30000);
     const current = ++generation.current;
     moreBusy.current = false;
-    const start = setTimeout(() => { fetch(`/api/memories?offset=0&search=${encodeURIComponent(searchQuery)}&sort=${sort}&seed=${shuffleSeed}`, { headers: { Authorization: `Bearer ${token}` }, cache: "no-store", signal: controller.signal })
+    const start = setTimeout(() => { fetch(`/api/memories?offset=0&search=${encodeURIComponent(searchQuery)}&sort=${sort}&seed=${shuffleSeed}`, { cache: "no-store", signal: controller.signal })
       .then(async (response) => {
         const data = await response.json();
         if (!response.ok) throw new Error(data.error || "Het archief kon niet worden geladen.");
@@ -136,7 +136,7 @@ export function MemoriesArchive({ token, revision }: { token: string; revision: 
         if (active && current === generation.current) { setError(reason.name === "AbortError" ? "Het laden duurt te lang. Probeer opnieuw." : reason.message); setLoadingMore(false); }
       }); }, 250);
     return () => { active = false; clearTimeout(start); clearTimeout(timeout); controller.abort(); };
-  }, [token, revision, refresh, searchQuery, sort, shuffleSeed]);
+  }, [revision, refresh, searchQuery, sort, shuffleSeed]);
 
   async function loadMore() {
     if (moreBusy.current || archive?.nextOffset == null) return;
@@ -156,7 +156,7 @@ export function MemoriesArchive({ token, revision }: { token: string; revision: 
   }
 
   return <section id="archief" className={styles.archive} aria-labelledby="archive-title">
-    <div className={styles.heading}><div><p className={styles.eyebrow}>Het gedeelde fotoarchief</p><h2 id="archive-title">Met context!</h2><p>Tik op een foto voor het verhaal. Iedereen met de link kan context en fotograaf aanvullen.</p></div><button type="button" onClick={() => setRefresh((value) => value + 1)}>Vernieuwen ↻</button></div>
+    <div className={styles.heading}><div><p className={styles.eyebrow}>Het gedeelde fotoarchief</p><h2 id="archive-title">Met context!</h2><p>Tik op een foto voor het verhaal. Goedgekeurde vrienden kunnen context, fotograaf en datum aanvullen.</p></div><button type="button" onClick={() => setRefresh((value) => value + 1)}>Vernieuwen ↻</button></div>
     <form className={styles.search} role="search" onSubmit={(event) => { event.preventDefault(); setRefresh((value) => value + 1); }}>
       <label htmlFor="archive-search">Zoek op context of fotograaf</label>
       <div><input id="archive-search" type="search" inputMode="search" maxLength={100} value={search} placeholder="Bijvoorbeeld Gent, Bas of Willem" onChange={(event) => { const value = event.target.value; if (value.trim() !== searchQuery) { setArchive(null); setError(""); } setSearch(value); }} />{search && <button type="button" onClick={() => { setSearch(""); setArchive(null); setError(""); }}>Wis zoekopdracht</button>}</div>
@@ -168,7 +168,7 @@ export function MemoriesArchive({ token, revision }: { token: string; revision: 
     </div>
     <div role="status" aria-live="polite">{error ? <p className={styles.error}>{error} <button type="button" onClick={() => setRefresh((value) => value + 1)}>Opnieuw proberen</button></p> : !archive ? <p>{searchQuery ? "Even zoeken in het hele archief…" : "Even het bewijsmateriaal ophalen…"}</p> : <p className={styles.count}>{archive.total} foto{archive.total === 1 ? "" : "’s"} {searchQuery ? `gevonden voor “${searchQuery}”` : "in het archief"}</p>}</div>
     {archive?.photos.length === 0 && <div className={styles.empty}><p>{searchQuery ? "Geen foto’s gevonden." : "Nog geen bewijsmateriaal."}</p><span>{searchQuery ? "Probeer een andere plaats, naam of een stukje van het verhaal." : "Wie durft de eerste foto in te sturen?"}</span>{!searchQuery && <a href="#upload-title">Foto’s toevoegen ↓</a>}</div>}
-    {!!archive?.photos.length && <ul className={styles.grid}>{archive.photos.map((photo) => <PhotoCard key={`${photo.id}-${photo.url}`} photo={photo} token={token} onUpdate={(updated) => setArchive((current) => current ? { ...current, photos: current.photos.map((item) => item.id === updated.id ? { ...item, ...updated } : item) } : current)} />)}</ul>}
+    {!!archive?.photos.length && <ul className={styles.grid}>{archive.photos.map((photo) => <PhotoCard key={`${photo.id}-${photo.url}`} photo={photo} onUpdate={(updated) => setArchive((current) => current ? { ...current, photos: current.photos.map((item) => item.id === updated.id ? { ...item, ...updated } : item) } : current)} />)}</ul>}
     {archive?.nextOffset != null && <button className={styles.more} type="button" disabled={loadingMore} onClick={loadMore}>{loadingMore ? "Even ophalen…" : "Meer foto’s bekijken ↓"}</button>}
   </section>;
 }

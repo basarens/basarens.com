@@ -22,9 +22,9 @@ function Preview({ file }: { file: File }) {
   return <img ref={imageRef} alt={file.name} onError={() => setFailed(true)} />;
 }
 
-export function MemoriesUpload({ token, configured, featuredVideoUrl, featuredPhotoUrl }: { token: string; configured: boolean; featuredVideoUrl?: string; featuredPhotoUrl?: string }) {
+export function MemoriesUpload({ configured, viewerName, featuredVideoUrl, featuredPhotoUrl }: { configured: boolean; viewerName: string; featuredVideoUrl?: string; featuredPhotoUrl?: string }) {
   const [photos, setPhotos] = useState<Photo[]>([]);
-  const [name, setName] = useState("");
+  const [name, setName] = useState(viewerName);
   const [message, setMessage] = useState("");
   const [photoDate, setPhotoDate] = useState(EMPTY_PHOTO_DATE);
   const [notice, setNotice] = useState("");
@@ -68,7 +68,7 @@ export function MemoriesUpload({ token, configured, featuredVideoUrl, featuredPh
   async function api(body: object) {
     const response = await fetch("/api/memories", {
       method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
       signal: AbortSignal.timeout(30000),
     });
@@ -120,7 +120,7 @@ export function MemoriesUpload({ token, configured, featuredVideoUrl, featuredPh
   return (
     <main className={styles.page}>
       <div className={styles.shell}>
-        <header className={styles.header}><span className={styles.brand}>bas arens<span> / herinneringen</span></span><span className={styles.badge}>Van jou, voor Bas</span></header>
+        <header className={styles.header}><span className={styles.brand}>bas arens<span> / herinneringen</span></span><button className={styles.accountButton} type="button" onClick={async () => { const response = await fetch("/api/memories/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "logout" }) }); if (response.ok) window.location.replace("/herinneringen"); }}>Uitloggen · {viewerName}</button></header>
         <section className={styles.intro}>
           <div><p className={styles.eyebrow}>Het fotoarchief dat Bas zelf niet heeft.</p><h1>De mooiste momenten maak je samen <em>met Bas</em></h1><p className={styles.friends}>en Ruben, en Willem, en Jord.</p><p className={styles.lead}>Vakanties, slechte dansmoves en avonden met een goed verhaal. Heb jij de foto’s nog? Stuur ze door. Ook als je er minder charmant op staat.</p></div>
           <div className={styles.art}>
@@ -151,7 +151,7 @@ export function MemoriesUpload({ token, configured, featuredVideoUrl, featuredPh
           </div>
         </section>
         <section className={styles.panel} aria-labelledby="upload-title">
-          <div className={styles.panelHeading}><div><p className={styles.eyebrow}>Tijd om je camerarol door te spitten</p><h2 id="upload-title">Heb jij nog bewijsmateriaal?</h2></div><span>Geen account nodig</span></div>
+          <div className={styles.panelHeading}><div><p className={styles.eyebrow}>Tijd om je camerarol door te spitten</p><h2 id="upload-title">Heb jij nog bewijsmateriaal?</h2></div><span>Alleen voor onze vrienden</span></div>
           {!configured && <p className={styles.warning} role="status">Het insturen staat nog niet aan. Je kunt alvast foto’s kiezen, maar ze worden nog niet opgeslagen. Kom later terug om ze te versturen.</p>}
           <div className={styles.dropzone} onDragOver={(event) => event.preventDefault()} onDrop={(event) => { event.preventDefault(); selectFiles(event.dataTransfer.files); }}>
             <span className={styles.plus} aria-hidden="true">＋</span><h3>Ja, ook die ene foto.</h3><p>Kies foto’s op je telefoon, of sleep ze hierheen.</p>
@@ -162,11 +162,11 @@ export function MemoriesUpload({ token, configured, featuredVideoUrl, featuredPh
           {photos.length > 0 && <><div className={styles.selectionHeading}><span>{photos.length} foto’s geselecteerd</span><span>{sent} ontvangen</span></div><ul className={styles.photos}>{photos.map((photo) => <li key={photo.id}><div className={styles.thumbnail}><Preview file={photo.file} />{photo.status !== "sent" && <button type="button" aria-label={`Verwijder ${photo.file.name}`} disabled={busy} onClick={() => setPhotos((current) => current.filter((item) => item.id !== photo.id))}>×</button>}</div><p className={styles.filename} title={photo.file.name}>{photo.file.name}</p><p className={photo.status === "error" ? styles.error : styles.photoStatus}>{photo.status === "sent" ? "✓ Ontvangen" : photo.status === "sending" ? "Wordt verstuurd…" : photo.status === "error" ? photo.error : "Klaar om te versturen"}</p></li>)}</ul></>}
           <div className={styles.fields}><label>Wie moeten we hiervoor bedanken? <span>optioneel</span><input value={name} maxLength={80} disabled={busy} autoComplete="name" placeholder="Je naam" onChange={(event) => setName(event.target.value)} /></label><label>Wat gebeurde hier? <span>optioneel</span><textarea value={message} maxLength={1200} disabled={busy} rows={3} placeholder="Waar waren we? Wanneer was dit? En wat dacht ik hier te doen?" onChange={(event) => setMessage(event.target.value)} /></label></div>
           <MemoriesDateFields value={photoDate} onChange={setPhotoDate} disabled={busy} batch />
-          <div className={styles.sendRow}><p>Je foto’s, naam en verhaal komen in het gedeelde archief.<br />Iedereen met deze link kan ze bekijken.</p><button className={styles.send} type="button" disabled={busy || !waiting || !configured} onClick={send}>{busy ? "Even versturen…" : sent && !waiting ? "Alles ontvangen ✓" : `Verstuur${waiting ? ` ${waiting} foto${waiting === 1 ? "" : "’s"}` : " je foto’s"}`} <span aria-hidden="true">→</span></button></div>
+          <div className={styles.sendRow}><p>Je foto’s, naam en verhaal komen in het gedeelde archief.<br />Alleen goedgekeurde vrienden kunnen ze bekijken.</p><button className={styles.send} type="button" disabled={busy || !waiting || !configured} onClick={send}>{busy ? "Even versturen…" : sent && !waiting ? "Alles ontvangen ✓" : `Verstuur${waiting ? ` ${waiting} foto${waiting === 1 ? "" : "’s"}` : " je foto’s"}`} <span aria-hidden="true">→</span></button></div>
           <p className={styles.notice} role="status" aria-live="polite">{notice}</p>
           {sent > 0 && !waiting && <button className={styles.more} type="button" onClick={() => { setPhotos([]); setMessage(""); setPhotoDate(EMPTY_PHOTO_DATE); setNotice(""); inputRef.current?.click(); }}>Er is meer bewijsmateriaal</button>}
         </section>
-        <MemoriesArchive token={token} revision={archiveRevision} />
+        <MemoriesArchive revision={archiveRevision} />
         <footer className={styles.footer}><span>Goed gezelschap. Matige beslissingen.</span><span>Het archief van Bas · basarens.com</span></footer>
       </div>
     </main>

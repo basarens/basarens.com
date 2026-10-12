@@ -1,40 +1,37 @@
-# Foto’s insturen via een persoonlijke link
+# Besloten fotoarchief
 
-Het gedeelde fotoarchief staat op `/herinneringen/<MEMORIES_UPLOAD_TOKEN>`. Iedereen met deze link kan alle bevestigde foto’s, namen en verhalen bekijken én zelf foto’s insturen, ook na doorsturen van de link. Het archief bevat ook foto’s van eerdere uitnodigingen. Er is geen link vanaf de homepage. `/herinneringen` vertelt bezoekers dat ze een uitnodiging nodig hebben. De uitnodigingspagina gebruikt noindex en no-referrer. De link is een toegangssleutel, geen individuele login.
+Het archief op `/herinneringen` vereist een persoonlijk Supabase-account en een actieve vermelding in `public.memories_members`. De oude gedeelde uitnodigingslink verwijst alleen nog naar deze pagina en geeft geen toegang. Er is geen openbare registratie; alleen door Bas goedgekeurde accounts krijgen toegang.
 
-## Activeren
+## Installatie en e-mail
 
-1. Gebruik je eigen Supabase-project en voer `supabase/memories.sql` uit in de SQL editor. Dit maakt een privébucket `memories-inbox` en een afgeschermde tabel voor naam, verhaal, originele bestandsnaam en ontvangststatus. Er worden geen leesrechten aan bezoekers gegeven. Als de bucket al bestaat, controleer of deze privé is, maximaal 20 MB per bestand toestaat en alleen de vijf MIME-types uit het script accepteert. De API weigert een publiek/onbegrensd bucket.
-2. Stel in `.env.local` en bij de hostingprovider in:
-   - `NEXT_PUBLIC_SUPABASE_URL`: project-URL.
-   - `MEMORIES_SUPABASE_SECRET_KEY`: een server-side Supabase secret key (`sb_secret_…`) of service-role key. Nooit een `NEXT_PUBLIC_`-naam geven, inchecken of aan vrienden sturen. De bestaande finance-client blijft de publishable key gebruiken.
-   - `MEMORIES_UPLOAD_TOKEN`: een willekeurige toegangssleutel van minstens 32 tekens, bijvoorbeeld gegenereerd met `node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"`.
-3. Herstart de lokale server of deploy de website met de instellingen. Deel daarna `https://basarens.com/herinneringen/<jouw-token>`.
-4. Test eerst één foto vanaf je telefoon: na verzending moet de pagina ‘Ontvangen’ tonen, de tabel een `complete`-regel en de bucket het bestand bevatten. Test ook een verkeerde link: deze moet 404 geven. De geheime server-key mag nooit in de browser of netwerkantwoorden staan.
+1. Stel `NEXT_PUBLIC_SUPABASE_URL` en `MEMORIES_SUPABASE_SECRET_KEY` in, lokaal en bij de hosting. De secret key blijft uitsluitend op de server. De server gebruikt deze ook voor de cookieclient van Auth; er gaat geen Supabase-key naar de browser.
+2. Voer eerst `supabase/memories.sql`, daarna `supabase/memories-dates.sql` en `supabase/memories-accounts.sql` uit. Houd beide opslagbuckets private. `memories-featured` bevat alleen MP4 en heeft een limiet van 10 MiB.
+3. Maak uitsluitend de expliciet goedgekeurde Auth-accounts aan. Voeg hun user_id, lowercase e-mail, weergavenaam en rol toe aan `memories_members`. Verifieer e-mail via de inlogcode. Accountgegevens en e-mailadressen horen niet in de repository.
+4. Configureer een maildienst, bijvoorbeeld Resend SMTP, met een geverifieerd verzenddomein en een sleutel met alleen verzendrechten. Supabase gebruikt `smtp.resend.com`, poort 465, gebruikersnaam `resend`; de sleutel hoort uitsluitend in het SMTP-wachtwoordveld van Supabase. Ontvangst van bestaande domeinmail hoeft niet gewijzigd te worden.
+5. Gebruik `supabase/memories-login-email.html` voor de Magic Link- en Confirm sign up-templates van Supabase. De pagina vraagt een code; de templates moeten dus `{{ .Token }}` bevatten. Voor een kleine vriendengroep volstaat het gratis mailpakket. Zet betaalde overages niet aan zonder toestemming.
 
-Zonder configuratie slaat de pagina niets op en geeft dat duidelijk aan. Ongeldige links tonen geen uploadformulier. Voor een lokale visuele preview kun je alleen het uitnodigingstoken configureren; opslag blijft dan uitgeschakeld.
+## Beveiliging
 
-## Gedrag en beheer
+- De sessie staat in aparte HttpOnly-, Secure- en SameSite=Lax-cookies. De server verifieert de gebruiker bij Supabase Auth en controleert de actieve membership opnieuw bij elk API- en mediaverzoek.
+- `active = false` trekt archieftoegang direct in, ook voor reeds gedeelde website-fotolinks. Downloaded foto's en screenshots kun je niet terughalen. Tijdelijke storage-links die vóór de omschakeling zijn uitgegeven, kunnen tot hun oorspronkelijke vervaldatum nog werken.
+- Foto's en video worden via `/api/memories/media/<id>` gestreamd, met private/no-store-headers. Storage-links blijven op de server. De server ondersteunt byte ranges voor de video. De browser krijgt geen herbruikbare Supabase-leeslinks.
+- Databasetabellen hebben RLS en geen rechten voor anon/authenticated. Alleen de server gebruikt de service key, na accountcontrole. Foto-opslag blijft privé; geen openbare storage-policies.
+- Schrijfacties vereisen dezelfde origin; in productie uitsluitend `https://www.basarens.com`. Loginpogingen hebben een gedeelde database-limiet per e-mailadres. Alleen actieve leden krijgen een code en automatische accountregistratie is uitgeschakeld.
+- Fotoreserveringen zijn gekoppeld aan uploaded_by; alleen die persoon kan zijn upload bevestigen. Metadatawijzigingen registreren edited_by en vergelijken de oude waarden atomisch. Er is geen volledige versiegeschiedenis.
+- Metadata en media krijgen no-store; de pagina krijgt noindex, nofollow, no-referrer en DENY voor framing. Noindex is geen toegangsbeveiliging.
 
-- Het uploadformulier staat boven het fotoarchief. De zoekbalk doorzoekt alle bevestigde foto’s op een deel van de context of fotograaf, zonder onderscheid tussen hoofdletters en kleine letters. Zoekresultaten worden op de server gefilterd vóór paginering; ook foto’s die nog niet geladen waren worden gevonden. Typen start het zoeken na 250 ms. Met ‘Wis zoekopdracht’ verschijnt het volledige archief weer.
+## Gebruik
 
-- Tik of klik op een foto om de kaart om te draaien. Op de achterkant kun je de context en fotograaf bekijken, aanpassen en opslaan. Iedereen met een geldige link heeft dezelfde bewerkrechten. De velden fotograaf en context gebruiken de bestaande kolommen `name` en `message`; er is geen database-migratie nodig. Nieuwe inzendingen nemen aanvankelijk de opgegeven naam over als fotograaf. De inzenddatum en originele foto veranderen niet. Bij gelijktijdig bewerken wordt een verouderde wijziging geweigerd; de gebruiker kan de nieuwste context bekijken voordat die opnieuw aanpast. Er is geen versiegeschiedenis.
-- Controle: `node --test tests/memories-upload.test.mjs`. Voor een echte test met één tijdelijke foto: `node scripts/verify-memories.mjs`, of `node scripts/verify-memories.mjs --live` voor www.basarens.com. Deze test wijzigt uitsluitend zijn eigen testrecord en ruimt foto en record daarna op.
+Iedere actieve vriend kan het volledige bevestigde archief zien, foto's insturen en context, fotograaf en fotodatum aanpassen. De voorkant toont context en fotodatum, de achterkant alle informatie. Jaar, jaar + maand of een volledige datum zijn mogelijk; onbekende delen blijven NULL. Bij upload geldt de datum voor de hele selectie, later kan hij per foto aangepast worden. Datums staan los van de uploaddatum.
 
-- De kaart bovenaan toont `bas-video-2026-10-12.mp4` uit de private Supabase-bucket `memories-featured` (alleen `video/mp4`, maximaal 10 MiB). De server maakt na controle van de uitnodigingslink een afspeellink die één uur geldig is. De pagina wordt dynamisch geladen, zodat iedere nieuwe paginalading een verse link krijgt. De video speelt automatisch zonder geluid in een loop, ook inline op mobiel; met de eigen knop kun je het geluid aan- en uitzetten; de standaard videobediening is verborgen. Zonder beschikbare video verschijnt de placeholder. Bewaar besloten video's niet onder `public`, waar ze onafhankelijk van de uitnodigingslink bereikbaar zijn.
+Maximaal 20 foto's per selectie en 20 MiB per foto: JPEG, PNG, WEBP, HEIC/HEIF. HEIC is uploadbaar, maar niet elke browser toont het voorbeeld. Originele bestanden inclusief eventuele EXIF/locatiegegevens worden bewaard. Bestanden gaan rechtstreeks naar een tijdelijke private upload-URL; de server bevestigt de echte bestandsgrootte. De quotatrigger begrenst het aantal reserveringen en hun totale grootte per uploadgroep.
 
-- Maximaal 20 foto’s per selectie, 20 MB per foto: JPEG, PNG, WEBP, HEIC/HEIF. HEIC is uploadbaar, maar niet iedere browser kan een voorbeeld tonen. Originele bestanden worden bewaard, inclusief eventuele locatiegegevens/EXIF. Er is geen bestandsconversie.
-- Bestanden gaan rechtstreeks naar Supabase via een tijdelijke upload-URL. Dat voorkomt de limiet voor grote bestanden op de websitehosting. Iedere foto krijgt een willekeurige bestandsnaam; overschrijven is uitgeschakeld.
-- Na upload controleert de server de opgeslagen bestandsgrootte en bevestigt de ontvangst. Een mislukte bevestiging kan worden herhaald zonder de foto opnieuw te uploaden. Al bevestigde foto’s worden overgeslagen bij opnieuw proberen.
-- De database begrenst iedere uitnodiging op 1.000 reserveringen en 5 GiB aan opgegeven bestandsgrootte, ook bij gelijktijdige verzoeken. Mislukte/afgebroken uploads kunnen pending-reserveringen achterlaten; controleer deze vóór verwijderen. MIME-filtering is geen inhoudelijke fotovalidatie; behandel uploads als niet-vertrouwde bestanden.
-- Het gedeelde archief toont 24 foto’s per pagina, nieuwste inzendingen eerst, met een knop om de volgende pagina te laden. Namen en verhalen zijn zichtbaar. Na upload vernieuwt het archief automatisch; voor inzendingen van anderen is er een vernieuwknop. Tijdelijke leeslinks zijn één uur geldig. De bucket en database blijven privé: alleen de website kan na controle van de uitnodigingscode leeslinks maken. Deze tijdelijke links kunnen tijdens hun geldigheid ook worden doorgestuurd. Er is geen verwijderfunctie voor bezoekers.
-- Een gewijzigd token maakt de oude uitnodigingslink onbruikbaar voor nieuwe verzoeken. Eerder uitgegeven signed upload-URL’s kunnen nog tot twee uur werken. Eerdere foto’s blijven opgeslagen.
-- Supabase is opslag, geen onafhankelijke back-up. Exporteer de originele bestanden en metadata regelmatig naar een tweede locatie. Houd ook de opslaglimieten van je Supabase-abonnement in de gaten.
+Zoeken op context of fotograaf en sorteren op laatst toegevoegd, fotodatum of shuffle werken op het hele archief. Shuffle gebruikt een vaste seed voor vervolgpagina's en tekent alleen de benodigde pagina. De uitgelichte video speelt inline in een loop en start stil, met een eigen geluidsknop. De achterste foto komt uit `featured/friends-2026-10-12.jpeg` in `memories-inbox`.
 
-De pagina is pas echt beschikbaar voor vrienden na configuratie én deployment. Er worden geen externe infrastructuurinstellingen door deze codewijziging aangemaakt.
+## Controles en beheer
 
-- De achterste kaart toont de private foto `featured/friends-2026-10-12.jpeg` uit `memories-inbox`, via een link van een uur die alleen na controle van de uitnodigingslink wordt gemaakt. Deze uitgelichte foto staat los van de inzendingen in het archief.
+`node --test tests/memories-upload.test.mjs tests/memories-accounts.test.mjs tests/memories-login.test.mjs`
 
-- Optionele fotodatum: voer `supabase/memories-dates.sql` uit na het basisschema, ook voor bestaande installaties. Dit voegt nullable `photo_year`, `photo_month` en `photo_day` toe met kalendercontroles en een index voor latere datumfilters. De uploaddatum blijft apart. Jaar, jaar + maand of een volledige datum zijn mogelijk; onbekende delen blijven NULL. Bij upload geldt de datum voor de hele selectie, daarna kan iedereen met de link de datum per foto aanpassen of leegmaken. Gelijktijdige datumwijzigingen worden beschermd tegen overschrijven.
+De integratiecontrole `node scripts/verify-memories.mjs` (of `--live`) vereist een goedgekeurde sessie via MEMORIES_TEST_COOKIE of `.private/memories-test-cookie.txt`. De controle gebruikt uitsluitend één eigen tijdelijke testfoto en verwijdert die daarna. Bewaar testcookies nooit in Git en verwijder ze na de controle.
 
-- Archiefsortering: laatst toegevoegd (standaard), fotodatum (nieuwste eerst, onbekende delen achteraan) of shuffle. Zoeken blijft actief voor elke sortering. Shuffle gebruikt een willekeurige seed en sorteert alle gevonden metadata op de server voordat pagina's van 24 foto's worden gekozen. Alleen de zichtbare pagina krijgt afspeellinks; dezelfde seed houdt vervolgpagina's stabiel. Opnieuw shuffelen maakt een nieuwe seed.
+Voeg vrienden alleen na expliciete toestemming toe. Geef de eigenaar de rol owner; vrienden krijgen friend. Trek toegang in door active op false te zetten. Bewaar daarnaast een afzonderlijke back-up: dit archief vervangt geen fotoback-up. De openbare broncode mag geen persoonlijke e-mailadressen, credentials of media bevatten.

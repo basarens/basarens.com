@@ -26,28 +26,11 @@ test("photo selection rejects oversized, empty and unsupported files", () => {
   assert.equal(files.photoType("fake.jpg", "text/html"), null);
 });
 
-test("invitation comparison fails closed for absent, short and incorrect secrets", () => {
-  const original = process.env.MEMORIES_UPLOAD_TOKEN;
-  const server = load("lib/memories/server.ts", { "server-only": {} });
-  try {
-    delete process.env.MEMORIES_UPLOAD_TOKEN;
-    assert.equal(server.validMemoriesToken("a".repeat(64)), false);
-    process.env.MEMORIES_UPLOAD_TOKEN = "short";
-    assert.equal(server.validMemoriesToken("short"), false);
-    process.env.MEMORIES_UPLOAD_TOKEN = "a".repeat(64);
-    assert.equal(server.validMemoriesToken("a".repeat(64)), true);
-    assert.equal(server.validMemoriesToken("b".repeat(64)), false);
-  } finally {
-    if (original === undefined) delete process.env.MEMORIES_UPLOAD_TOKEN;
-    else process.env.MEMORIES_UPLOAD_TOKEN = original;
-  }
-});
-
 function fixture(options = {}) {
   const calls = [];
   let updating = false;
+  let authorised = true;
   const query = {
-    is(...args) { calls.push(["is", ...args]); return this; },
     is(...args) { calls.push(["is", ...args]); return this; },
     select() { return this; }, eq(...args) { calls.push(["eq", ...args]); return this; },
     order(...args) { calls.push(["order", ...args]); return this; },
@@ -74,10 +57,13 @@ function fixture(options = {}) {
     memoriesConfigured: () => options.configured ?? true,
     memoriesLinkHash: () => "a".repeat(64), memoriesClient: () => ({ storage, from: () => query }),
   };
-  const { POST, GET, PATCH } = load("app/api/memories/route.ts", { "@/lib/memories/files": files, "@/lib/memories/server": server });
-  return { calls, edit: (body, token = "valid") => PATCH(new Request("https://example.com/api/memories", { method: "PATCH", headers: { authorization: `Bearer ${token}` }, body: JSON.stringify(body) })), get: (token = "valid", offset = "0", search = "", sort = "latest", seed = "") => GET(new Request(`https://example.com/api/memories?offset=${offset}&search=${encodeURIComponent(search)}&sort=${sort}&seed=${seed}`, { headers: { authorization: `Bearer ${token}` } })), run: (body, token = "valid") => POST(new Request("https://example.com/api/memories", {
-    method: "POST", headers: { authorization: `Bearer ${token}` }, body: JSON.stringify(body),
-  })) };
+  const { POST, GET, PATCH } = load("app/api/memories/route.ts", { "@/lib/memories/files": files, "@/lib/memories/server": server, "@/lib/memories/auth": { memoriesAccountAccess: async () => authorised ? {userId:"approved-user"} : null, memoriesSameOrigin: () => options.sameOrigin ?? true } });
+  const request = (method, body, token, params = "") => {
+    authorised = token === "valid";
+    const req = new Request(`https://example.com/api/memories${params}`, {method, headers:{origin:"https://example.com"}, ...(method === "GET" ? {} : {body:JSON.stringify(body)})});
+    return ({GET,POST,PATCH})[method](req);
+  };
+  return {calls, edit:(body,token="valid")=>request("PATCH",body,token), run:(body,token="valid")=>request("POST",body,token), get:(token="valid",offset="0",search="",sort="latest",seed="")=>request("GET",null,token,`?offset=${offset}&search=${encodeURIComponent(search)}&sort=${sort}&seed=${seed}`)};
 }
 const prepare = { action: "prepare", filename: "../../photo.jpg", type: "image/jpeg", size: 120, name: "Friend", message: "A memory" };
 const contextEdit = { id: "12345678-1234-1234-1234-123456789abc", name: "Photographer", message: "Context", previousName: "Friend", previousMessage: "A memory" };
@@ -95,7 +81,7 @@ test("date edits compare unknown and known date parts atomically; legacy edits p
   const date = {photo_year:2024,photo_month:2,photo_day:29};
   const previousDate = {photo_year:2022,photo_month:null,photo_day:null};
   assert.equal((await f.edit({...contextEdit,...date,previousDate})).status,200);
-  assert.deepEqual(f.calls.find(([name])=>name==="update")[1],{name:"Photographer",message:"Context",...date});
+  assert.deepEqual(f.calls.find(([name])=>name==="update")[1],{name:"Photographer",message:"Context",edited_by:"approved-user",...date});
   assert.ok(f.calls.some(([name,key,value])=>name==="eq"&&key==="photo_year"&&value===2022));
   for (const field of ["photo_month","photo_day"]) assert.ok(f.calls.some(([name,key,value])=>name==="is"&&key===field&&value===null));
   assert.equal((await fixture().edit({...contextEdit,...date})).status,400);
@@ -116,8 +102,8 @@ test("search covers context and photographer before pagination and keeps complet
   assert.ok(!empty.calls.some(([name]) => name === "search"));
 });
 
-test("editing requires invitation and validates context fields", async () => {
-  assert.equal((await fixture().edit(contextEdit, "invalid")).status, 403);
+test("editing requires personal account and validates context fields", async () => {
+  assert.equal((await fixture().edit(contextEdit, "invalid")).status, 401);
   for (const body of [null, { ...contextEdit, id: "../photo" }, { ...contextEdit, name: "x".repeat(81) }, { ...contextEdit, message: "x".repeat(1201) }, { ...contextEdit, previousName: null }]) {
     const f = fixture();
     assert.equal((await f.edit(body)).status, 400);
@@ -129,7 +115,7 @@ test("editing modifies only photographer/context and compares previous values at
   const f = fixture();
   const response = await f.edit({ ...contextEdit, name: " Photographer ", message: " Context ", path: "forbidden.jpg", status: "pending" });
   assert.equal(response.status, 200);
-  assert.deepEqual(f.calls.find(([name]) => name === "update"), ["update", { name: "Photographer", message: "Context" }]);
+  assert.deepEqual(f.calls.find(([name]) => name === "update"), ["update", { name: "Photographer", message: "Context", edited_by: "approved-user" }]);
   for (const [field, value] of [["id", contextEdit.id], ["status", "complete"], ["name", contextEdit.previousName], ["message", contextEdit.previousMessage]]) {
     assert.ok(f.calls.some(([name, key, actual]) => name === "eq" && key === field && actual === value));
   }
@@ -144,20 +130,20 @@ test("editing detects concurrent changes and unavailable photos", async () => {
   assert.equal((await fixture({ updateError: true }).edit(contextEdit)).status, 503);
 });
 
-test("invalid invitations and unconfigured storage cannot reserve uploads", async () => {
+test("unapproved accounts and unconfigured storage cannot reserve uploads", async () => {
   const f = fixture();
-  assert.equal((await f.run(prepare, "invalid")).status, 403);
+  assert.equal((await f.run(prepare, "invalid")).status, 401);
   assert.equal(f.calls.length, 0);
   assert.equal((await fixture({ configured: false }).run(prepare)).status, 503);
 });
 
-test("archive denies invalid invitations and public storage", async () => {
-  assert.equal((await fixture().get("invalid")).status, 403);
+test("archive denies unapproved accounts and public storage", async () => {
+  assert.equal((await fixture().get("invalid")).status, 401);
   assert.equal((await fixture({ public: true }).get()).status, 503);
   assert.equal((await fixture().get("valid", "-1")).status, 400);
 });
 
-test("archive includes completed photos across invitations, with short-lived URLs and no internal paths", async () => {
+test("archive includes completed photos across invitations, with account-only URLs and no internal paths", async () => {
   const f = fixture({ rows: [{ id: "photo", path: "older-invite/photo.jpg", filename: "photo.jpg", name: "Friend", message: "A story", created_at: "2026-10-12T10:00:00Z" }], total: 25 });
   const response = await f.get("valid", "24");
   assert.equal(response.status, 200);
@@ -169,9 +155,9 @@ test("archive includes completed photos across invitations, with short-lived URL
   assert.ok(data.photos[0].url);
   assert.ok(!Object.hasOwn(data.photos[0], "path"));
   assert.ok(f.calls.some(([name, field, value]) => name === "eq" && field === "status" && value === "complete"));
-  assert.ok(!f.calls.some(([name, field]) => name === "eq" && field === "link_hash"));
+  assert.ok(!f.calls.some(([name, field]) => name === "eq" && field === "uploaded_by"));
   assert.deepEqual(f.calls.find(([name]) => name === "range"), ["range", 24, 47]);
-  assert.equal(f.calls.find(([name]) => name === "signed-read")[2], 3600);
+  assert.ok(data.photos.every(photo => photo.url.startsWith("/api/memories/media/")));
 });
 
 test("archive paginates and handles an empty collection", async () => {
@@ -197,12 +183,12 @@ test("uploads use random paths, keep metadata and never return server credential
   assert.match(row.path, /^a{16}\/[0-9a-f-]{36}\.jpg$/);
   assert.equal(row.message, "A memory");
 });
-test("confirmation checks invitation ownership and actual size", async () => {
+test("confirmation checks account ownership and actual size", async () => {
   const f = fixture({ size: 121 });
   const body = { action: "complete", id: "12345678-1234-1234-1234-123456789abc" };
   assert.equal((await f.run(body)).status, 400);
   assert.ok(f.calls.some(([name]) => name === "remove"));
-  assert.ok(f.calls.some(([name, field]) => name === "eq" && field === "link_hash"));
+  assert.ok(f.calls.some(([name, field]) => name === "eq" && field === "uploaded_by"));
   assert.ok(!f.calls.some(([name]) => name === "update"));
   assert.equal((await fixture().run(body)).status, 200);
 });
@@ -236,4 +222,11 @@ test("shuffle spans the complete archive and paginates a repeatable seeded order
   assert.ok(f.calls.filter(([name])=>name==="signed-read").every(call=>call[1].length===24));
   assert.equal((await fixture().get("valid","0","","shuffle","bad")).status,400);
   assert.equal((await fixture().get("valid","0","","unexpected")).status,400);
+});
+
+test("account writes reject cross-site requests", async () => {
+  const f=fixture({sameOrigin:false});
+  assert.equal((await f.edit(contextEdit)).status,403);
+  assert.equal((await f.run(prepare)).status,403);
+  assert.equal(f.calls.length,0);
 });

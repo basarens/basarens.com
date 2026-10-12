@@ -1,6 +1,8 @@
 import { createHash, randomUUID } from "node:crypto";
 import { archiveSearchFilter, MAX_PHOTO_BYTES, PHOTO_TYPES, readPhotoDate, validPhoto } from "@/lib/memories/files";
-import { MEMORIES_BUCKET, memoriesClient, memoriesConfigured, memoriesLinkHash, validMemoriesToken } from "@/lib/memories/server";
+import { MEMORIES_BUCKET, memoriesClient, memoriesConfigured, memoriesLinkHash } from "@/lib/memories/server";
+
+import { memoriesAccountAccess, memoriesSameOrigin } from "@/lib/memories/auth";
 
 export const runtime = "nodejs";
 
@@ -9,8 +11,8 @@ function reply(body: object, status = 200) {
 }
 
 export async function GET(request: Request) {
-  const token = request.headers.get("authorization")?.replace(/^Bearer /, "") ?? "";
-  if (!validMemoriesToken(token)) return reply({ error: "Deze uitnodigingslink is niet geldig." }, 403);
+  const account = await memoriesAccountAccess();
+  if (!account) return reply({ error: "Log eerst in met je eigen account." }, 401);
   if (!memoriesConfigured()) return reply({ error: "Het fotoarchief is nog niet beschikbaar." }, 503);
   const offsetText = new URL(request.url).searchParams.get("offset") ?? "0";
   if (!/^\d{1,8}$/.test(offsetText)) return reply({ error: "Ongeldige archiefpagina." }, 400);
@@ -51,13 +53,7 @@ export async function GET(request: Request) {
     }
     const { data: rows, count, error } = result;
     if (error || !rows) return reply({ error: "Het archief kon niet worden geladen. Probeer opnieuw." }, 503);
-    const { data: signed, error: signingError } = rows.length
-      ? await client.storage.from(MEMORIES_BUCKET).createSignedUrls(rows.map((row) => row.path), 3600)
-      : { data: [], error: null };
-    if (signingError || !signed) return reply({ error: "De foto’s konden niet worden geladen. Probeer opnieuw." }, 503);
-    const photos = rows.map(({ path, ...photo }) => ({
-      ...photo, url: signed.find((item) => item.path === path && !item.error)?.signedUrl ?? null,
-    }));
+    const photos = rows.map(({ id, filename, name, message, photo_year, photo_month, photo_day, created_at }) => ({ id, filename, name, message, photo_year, photo_month, photo_day, created_at, url: `/api/memories/media/${id}` }));
     return reply({ photos, total: count ?? photos.length, nextOffset: offset + rows.length < (count ?? 0) ? offset + rows.length : null });
   } catch {
     return reply({ error: "Het archief is tijdelijk niet beschikbaar. Probeer opnieuw." }, 503);
@@ -65,8 +61,9 @@ export async function GET(request: Request) {
 }
 
 export async function PATCH(request: Request) {
-  const token = request.headers.get("authorization")?.replace(/^Bearer /, "") ?? "";
-  if (!validMemoriesToken(token)) return reply({ error: "Deze uitnodigingslink is niet geldig." }, 403);
+  if (!memoriesSameOrigin(request)) return reply({ error: "Ongeldig verzoek." }, 403);
+  const account = await memoriesAccountAccess();
+  if (!account) return reply({ error: "Log eerst in met je eigen account." }, 401);
   if (!memoriesConfigured()) return reply({ error: "Het archief is nog niet beschikbaar." }, 503);
   const raw = await request.text();
   if (raw.length > 8192) return reply({ error: "De context is te lang." }, 413);
@@ -88,7 +85,7 @@ export async function PATCH(request: Request) {
     const client = memoriesClient();
     // Compare-and-update in one query: another visitor's edit must not be overwritten.
     let update = client.from("memories_uploads")
-      .update({ name: body.name.trim(), message: body.message.trim(), ...(editsDate ? date : {}) })
+      .update({ name: body.name.trim(), message: body.message.trim(), edited_by: account.userId, ...(editsDate ? date : {}) })
       .eq("id", body.id).eq("status", "complete")
       .eq("name", body.previousName).eq("message", body.previousMessage);
     if (editsDate && previousDate) {
@@ -110,8 +107,9 @@ export async function PATCH(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const token = request.headers.get("authorization")?.replace(/^Bearer /, "") ?? "";
-  if (!validMemoriesToken(token)) return reply({ error: "Deze uitnodigingslink is niet geldig." }, 403);
+  if (!memoriesSameOrigin(request)) return reply({ error: "Ongeldig verzoek." }, 403);
+  const account = await memoriesAccountAccess();
+  if (!account) return reply({ error: "Log eerst in met je eigen account." }, 401);
   if (!memoriesConfigured()) return reply({ error: "Het insturen staat nog niet aan. Probeer het later opnieuw." }, 503);
   // Only small metadata passes through Next.js; photos go directly to private storage.
   const raw = await request.text();
@@ -120,12 +118,12 @@ export async function POST(request: Request) {
   try { body = JSON.parse(raw); } catch { return reply({ error: "Ongeldig verzoek." }, 400); }
   if (!body || typeof body !== "object" || Array.isArray(body)) return reply({ error: "Ongeldig verzoek." }, 400);
   const client = memoriesClient();
-  const linkHash = memoriesLinkHash(token);
+  const linkHash = memoriesLinkHash("memories-accounts");
 
   try {
     if (body.action === "complete") {
       if (typeof body.id !== "string" || !/^[0-9a-f-]{36}$/.test(body.id)) return reply({ error: "Ongeldige foto." }, 400);
-      const { data: photo, error } = await client.from("memories_uploads").select("path,size,status").eq("id", body.id).eq("link_hash", linkHash).maybeSingle();
+      const { data: photo, error } = await client.from("memories_uploads").select("path,size,status").eq("id", body.id).eq("uploaded_by", account.userId).maybeSingle();
       if (error || !photo) return reply({ error: "Deze foto kon niet worden gevonden." }, 404);
       const { data: info, error: infoError } = await client.storage.from(MEMORIES_BUCKET).info(photo.path);
       if (infoError || !info) return reply({ error: "De foto is nog niet ontvangen. Probeer opnieuw." }, 409);
@@ -133,7 +131,7 @@ export async function POST(request: Request) {
         await client.storage.from(MEMORIES_BUCKET).remove([photo.path]);
         return reply({ error: "De ontvangen foto heeft een ongeldige bestandsgrootte." }, 400);
       }
-      const { error: updateError } = await client.from("memories_uploads").update({ status: "complete" }).eq("id", body.id).eq("link_hash", linkHash);
+      const { error: updateError } = await client.from("memories_uploads").update({ status: "complete" }).eq("id", body.id).eq("uploaded_by", account.userId);
       if (updateError) return reply({ error: "De ontvangst kon niet bevestigd worden. Probeer opnieuw." }, 503);
       return reply({ received: true });
     }
@@ -153,7 +151,7 @@ export async function POST(request: Request) {
     const id = randomUUID();
     const path = `${linkHash.slice(0, 16)}/${id}.${PHOTO_TYPES[body.type]}`;
     const { error: reservationError } = await client.from("memories_uploads").insert({
-      id, path, link_hash: linkHash, filename: body.filename.trim(), size: body.size,
+      id, path, link_hash: linkHash, uploaded_by: account.userId, filename: body.filename.trim(), size: body.size,
       name: body.name.trim(), message: body.message.trim(), ...date, status: "pending",
     });
     if (reservationError) return reply({ error: "Het insturen is momenteel niet beschikbaar. Probeer het later opnieuw." }, 503);
